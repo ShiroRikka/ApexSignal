@@ -67,7 +67,7 @@ python test_indicators.py
 The application currently calculates the following technical indicators:
 
 - **MACD** (Moving Average Convergence Divergence)
-- **RSI** (Relative Strength Index)
+- **RSI14** (14-period Relative Strength Index) - Calculated using Wilder's Smoothing Method
 - **KDJ** (Stochastic Oscillator)
 
 The indicator calculation module is designed to be easily extensible for adding more indicators in the future.

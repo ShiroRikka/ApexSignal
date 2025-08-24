@@ -52,7 +52,7 @@ class IndicatorCalculator:
     
     def calculate_rsi(self, period=14):
         """
-        Calculate RSI indicator.
+        Calculate RSI indicator using Wilder's Smoothing Method.
 
         Args:
             period (int): RSI calculation period. Default is 14.
@@ -67,9 +67,14 @@ class IndicatorCalculator:
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
         
-        # Calculate average gains and losses
-        avg_gain = gain.rolling(window=period, min_periods=1).mean()
-        avg_loss = loss.rolling(window=period, min_periods=1).mean()
+        # Calculate initial average gain and loss using simple moving average
+        avg_gain = gain.rolling(window=period, min_periods=period).mean()
+        avg_loss = loss.rolling(window=period, min_periods=period).mean()
+        
+        # Apply Wilder's smoothing method for subsequent values
+        for i in range(period, len(self.data)):
+            avg_gain.iloc[i] = (avg_gain.iloc[i-1] * (period - 1) + gain.iloc[i]) / period
+            avg_loss.iloc[i] = (avg_loss.iloc[i-1] * (period - 1) + loss.iloc[i]) / period
         
         # Calculate RS and RSI
         rs = avg_gain / avg_loss
