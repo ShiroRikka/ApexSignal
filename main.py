@@ -1,8 +1,8 @@
 """Main entry point for the stock data collector application."""
 
 import argparse
-from stock_data_collector.data.data_fetcher import StockDataFetcher
-from stock_data_collector.config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
+from data.data_fetcher import StockDataFetcher
+from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 def main():
     """Main function to parse arguments and initiate data fetching."""

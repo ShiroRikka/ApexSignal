@@ -1,9 +1,9 @@
 """Data fetcher that orchestrates the process of getting and storing stock data."""
 
 import datetime
-from stock_data_collector.api.tushare_client import TushareClient
-from stock_data_collector.database.db_manager import DatabaseManager
-from stock_data_collector.config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
+from api.tushare_client import TushareClient
+from database.db_manager import DatabaseManager
+from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 class StockDataFetcher:
     """Orchestrates the fetching and storing of stock data."""

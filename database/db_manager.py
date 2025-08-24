@@ -1,7 +1,7 @@
 """Database manager for storing and retrieving stock data."""
 
 import sqlite3
-from stock_data_collector.config import DB_NAME
+from config import DB_NAME
 
 class DatabaseManager:
     """Manages database connections and operations for stock data."""

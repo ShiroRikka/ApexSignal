@@ -1,7 +1,7 @@
 """Tushare API client for fetching stock data."""
 
 import tushare as ts
-from stock_data_collector.config import TUSHARE_TOKEN
+from config import TUSHARE_TOKEN
 
 class TushareClient:
     """A wrapper class for the Tushare Pro API."""
