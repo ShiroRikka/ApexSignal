@@ -36,6 +36,23 @@ class DatabaseManager:
             )
         ''')
 
+        # Create indicators table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS indicators (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts_code TEXT,
+                trade_date TEXT,
+                macd_line REAL,
+                signal_line REAL,
+                macd_histogram REAL,
+                rsi REAL,
+                kdj_k REAL,
+                kdj_d REAL,
+                kdj_j REAL,
+                UNIQUE(ts_code, trade_date)
+            )
+        ''')
+
         conn.commit()
         conn.close()
         print(f"Database {self.db_name} initialized.")
@@ -59,6 +76,42 @@ class DatabaseManager:
         except Exception as e:
             # This might catch duplicate data errors, which can be handled or ignored
             print(f"Error saving daily price data to database (may contain duplicates): {e}")
+        finally:
+            conn.close()
+
+    def save_indicators_data(self, df_indicators):
+        """
+        Save indicators data to the database.
+
+        Args:
+            df_indicators (pandas.DataFrame): DataFrame containing indicators data.
+        """
+        if df_indicators is None or df_indicators.empty:
+            print("No indicators data to save.")
+            return
+
+        # Select only the columns needed for the indicators table
+        indicators_columns = [
+            'ts_code', 'trade_date', 'macd_line', 'signal_line', 
+            'macd_histogram', 'rsi', 'kdj_k', 'kdj_d', 'kdj_j'
+        ]
+        
+        # Check if all required columns exist in the DataFrame
+        missing_columns = set(indicators_columns) - set(df_indicators.columns)
+        if missing_columns:
+            print(f"Missing columns in indicators data: {missing_columns}")
+            return
+        
+        df_to_save = df_indicators[indicators_columns]
+
+        conn = self.get_connection()
+        try:
+            # Use 'append' mode with UNIQUE constraint to avoid duplicates
+            df_to_save.to_sql('indicators', conn, if_exists='append', index=False)
+            print(f"Successfully saved {len(df_to_save)} indicators records to the database.")
+        except Exception as e:
+            # This might catch duplicate data errors, which can be handled or ignored
+            print(f"Error saving indicators data to database (may contain duplicates): {e}")
         finally:
             conn.close()
 

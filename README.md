@@ -2,6 +2,13 @@
 
 A Python application to fetch, store, and analyze Chinese A-share stock market data using Tushare API.
 
+## Features
+
+- Fetch daily stock price data from Tushare API
+- Store data in a local SQLite database
+- Calculate technical indicators (MACD, RSI, KDJ)
+- Easy to extend for additional indicators
+
 ## Project Structure
 
 ```
@@ -16,7 +23,9 @@ stock_data_collector/
 ├── database/                 # Database management
 │   └── db_manager.py         # Database operations
 ├── scheduler/                # Scheduled tasks (currently empty)
-└── utils/                    # Utility functions (currently empty)
+├── utils/                    # Utility functions
+│   └── indicator_calculator.py # Technical indicator calculation
+└── test_indicators.py        # Test script for indicators
 ```
 
 ## Setup
@@ -37,10 +46,28 @@ stock_data_collector/
 
 ## Usage
 
-Run the main script to fetch and store stock data:
+Run the main script to fetch and store stock data along with calculated indicators:
 
 ```bash
 python main.py
 ```
 
 By default, it fetches data for the stock code `601818.SH` (China Everbright Bank) for the past 365 days. You can modify `config.py` to change the default stock code and date range, or modify `main.py` to fetch data for different stocks.
+
+### Testing Indicators
+
+You can test the indicator calculation functionality with the provided test script:
+
+```bash
+python test_indicators.py
+```
+
+## Technical Indicators
+
+The application currently calculates the following technical indicators:
+
+- **MACD** (Moving Average Convergence Divergence)
+- **RSI** (Relative Strength Index)
+- **KDJ** (Stochastic Oscillator)
+
+The indicator calculation module is designed to be easily extensible for adding more indicators in the future.

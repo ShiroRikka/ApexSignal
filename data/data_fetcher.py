@@ -1,8 +1,10 @@
 """Data fetcher that orchestrates the process of getting and storing stock data."""
 
 import datetime
+import pandas as pd
 from api.tushare_client import TushareClient
 from database.db_manager import DatabaseManager
+from utils.indicator_calculator import IndicatorCalculator
 from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 class StockDataFetcher:
@@ -41,6 +43,15 @@ class StockDataFetcher:
                     
                     # Save data to database
                     self.db_manager.save_daily_price_data(df_daily)
+                    
+                    # Calculate indicators
+                    print("Calculating technical indicators...")
+                    indicator_calculator = IndicatorCalculator(df_daily)
+                    df_indicators = indicator_calculator.calculate_all_indicators()
+                    
+                    # Save indicators to database
+                    self.db_manager.save_indicators_data(df_indicators)
+                    print("Technical indicators calculated and saved.")
                 else:
                     print(f"Failed to fetch data for {stock_code}. Please check the stock code or date range.")
 
