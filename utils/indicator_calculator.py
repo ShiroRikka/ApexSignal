@@ -85,32 +85,45 @@ class IndicatorCalculator:
         
         return self.data
     
-    def calculate_kdj(self, period=9, k_period=3, d_period=3):
+    def calculate_kdj(self, period=9):
         """
-        Calculate KDJ indicator.
+        Calculate KDJ indicator using standard weighted moving average method.
 
         Args:
             period (int): Period for calculating highest high and lowest low. Default is 9.
-            k_period (int): Smoothing period for %K. Default is 3.
-            d_period (int): Smoothing period for %D. Default is 3.
 
         Returns:
             pd.DataFrame: DataFrame with added KDJ columns.
         """
         # Calculate highest high and lowest low over the period
-        low_min = self.data['low'].rolling(window=period, min_periods=1).min()
-        high_max = self.data['high'].rolling(window=period, min_periods=1).max()
+        low_min = self.data['low'].rolling(window=period, min_periods=period).min()
+        high_max = self.data['high'].rolling(window=period, min_periods=period).max()
         
-        # Calculate %K
-        stoch_k = 100 * (self.data['close'] - low_min) / (high_max - low_min)
+        # Calculate RSV (Raw Stochastic Value)
+        rsv = 100 * (self.data['close'] - low_min) / (high_max - low_min)
         
-        # Calculate %K smoothing
-        k = stoch_k.rolling(window=k_period, min_periods=1).mean()
+        # Initialize K and D arrays
+        k = np.zeros(len(self.data))
+        d = np.zeros(len(self.data))
         
-        # Calculate %D
-        d = k.rolling(window=d_period, min_periods=1).mean()
+        # Set initial values for K and D
+        # Find the first valid RSV value
+        first_valid_index = rsv.first_valid_index()
+        if first_valid_index is not None:
+            # Set initial K and D values to 50
+            k[first_valid_index] = 50
+            d[first_valid_index] = 50
+            
+            # Calculate K and D using weighted moving average
+            for i in range(first_valid_index + 1, len(self.data)):
+                k[i] = (2/3) * k[i-1] + (1/3) * rsv.iloc[i]
+                d[i] = (2/3) * d[i-1] + (1/3) * k[i]
+        else:
+            # If no valid RSV values, set all K and D values to NaN
+            k[:] = np.nan
+            d[:] = np.nan
         
-        # Calculate %J
+        # Calculate J value
         j = 3 * k - 2 * d
         
         # Add to data
