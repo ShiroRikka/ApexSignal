@@ -4,7 +4,7 @@ A Python application to fetch, store, and analyze Chinese A-share stock market d
 
 ## Features
 
-- Fetch daily stock price data from Tushare API (using forward adjusted prices for accurate technical analysis)
+- Fetch daily stock price data from Tushare API using the powerful `pro_bar` interface (with forward adjusted prices for accurate technical analysis)
 - Store data in a local SQLite database
 - Calculate technical indicators (MACD, RSI14, KDJ)
 - Easy to extend for additional indicators
@@ -17,7 +17,7 @@ stock_data_collector/
 ├── main.py                   # Main entry point
 ├── config.py                 # Configuration settings
 ├── api/                      # API clients
-│   └── tushare_client.py     # Tushare API client
+│   └── tushare_client.py     # Tushare API client using pro_bar interface
 ├── data/                     # Data processing modules
 │   └── data_fetcher.py       # Data fetching and storage orchestrator
 ├── database/                 # Database management

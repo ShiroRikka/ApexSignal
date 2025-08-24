@@ -26,13 +26,27 @@ class TushareClient:
             pandas.DataFrame: A DataFrame containing the daily price data.
         """
         try:
-            df_daily = self.pro.daily(
+            # Using pro_bar interface which is more feature-rich
+            df_daily = ts.pro_bar(
                 ts_code=ts_code,
+                adj='qfq',  # Use forward adjusted prices
                 start_date=start_date,
                 end_date=end_date,
-                adj='qfq',  # Use forward adjusted prices
-                fields='ts_code,trade_date,open,high,low,close,vol,amount'
+                asset='E',  # E for stocks
+                freq='D'   # Daily frequency
             )
+            
+            # Ensure we return the data with the expected columns
+            if df_daily is not None and not df_daily.empty:
+                # Reorder columns to match our expected format
+                expected_columns = ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount']
+                # Check if all expected columns exist in the DataFrame
+                missing_columns = set(expected_columns) - set(df_daily.columns)
+                if not missing_columns:
+                    df_daily = df_daily[expected_columns]
+                else:
+                    print(f"Warning: Missing columns in fetched data: {missing_columns}")
+            
             return df_daily
         except Exception as e:
             print(f"Error fetching daily data: {e}")
