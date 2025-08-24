@@ -42,9 +42,9 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ts_code TEXT,
                 trade_date TEXT,
-                macd_line REAL,
-                signal_line REAL,
-                macd_histogram REAL,
+                macd_dif REAL,
+                macd_dea REAL,
+                macd_bar REAL,
                 rsi REAL,
                 kdj_k REAL,
                 kdj_d REAL,
@@ -92,8 +92,8 @@ class DatabaseManager:
 
         # Select only the columns needed for the indicators table
         indicators_columns = [
-            'ts_code', 'trade_date', 'macd_line', 'signal_line', 
-            'macd_histogram', 'rsi', 'kdj_k', 'kdj_d', 'kdj_j'
+            'ts_code', 'trade_date', 'macd_dif', 'macd_dea', 
+            'macd_bar', 'rsi', 'kdj_k', 'kdj_d', 'kdj_j'
         ]
         
         # Check if all required columns exist in the DataFrame

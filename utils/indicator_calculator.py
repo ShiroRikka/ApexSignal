@@ -34,19 +34,19 @@ class IndicatorCalculator:
         ema_fast = self.data['close'].ewm(span=fast_period, adjust=False).mean()
         ema_slow = self.data['close'].ewm(span=slow_period, adjust=False).mean()
         
-        # Calculate MACD line
-        macd_line = ema_fast - ema_slow
+        # Calculate DIF line (MACD line)
+        dif_line = ema_fast - ema_slow
         
-        # Calculate signal line
-        signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+        # Calculate DEA line (Signal line)
+        dea_line = dif_line.ewm(span=signal_period, adjust=False).mean()
         
-        # Calculate MACD histogram
-        macd_histogram = macd_line - signal_line
+        # Calculate MACD histogram (Bar)
+        macd_histogram = (dif_line - dea_line) * 2  # Multiply by 2 for standard representation
         
-        # Add to data
-        self.data['macd_line'] = macd_line
-        self.data['signal_line'] = signal_line
-        self.data['macd_histogram'] = macd_histogram
+        # Add to data with clear column names
+        self.data['macd_dif'] = dif_line  # DIF line (快线)
+        self.data['macd_dea'] = dea_line  # DEA line (慢线/信号线)
+        self.data['macd_bar'] = macd_histogram  # MACD bar (柱状图)
         
         return self.data
     

@@ -85,7 +85,7 @@ python test_indicators.py
 
 The application currently calculates the following technical indicators:
 
-- **MACD** (Moving Average Convergence Divergence)
+- **MACD** (Moving Average Convergence Divergence) - Standard implementation with DIF line (fast line), DEA line (slow/signal line), and MACD bar (histogram)
 - **RSI14** (14-period Relative Strength Index) - Calculated using Wilder's Smoothing Method
 - **KDJ** (Stochastic Oscillator) - Calculated using standard weighted moving average method
 
