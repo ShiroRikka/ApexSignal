@@ -15,6 +15,7 @@ class TushareClient:
     def get_daily_data(self, ts_code, start_date, end_date):
         """
         Fetch daily stock price data for a given stock code and date range.
+        Uses forward adjusted prices for accurate technical analysis.
 
         Args:
             ts_code (str): The stock code (e.g., '601818.SH').
@@ -29,6 +30,7 @@ class TushareClient:
                 ts_code=ts_code,
                 start_date=start_date,
                 end_date=end_date,
+                adj='qfq',  # Use forward adjusted prices
                 fields='ts_code,trade_date,open,high,low,close,vol,amount'
             )
             return df_daily

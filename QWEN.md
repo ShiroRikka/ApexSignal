@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a Python application designed to fetch, store, and potentially analyze Chinese A-share stock market data. It primarily uses the Tushare API to retrieve historical stock price information and stores this data in a local SQLite database. The application also calculates and stores technical indicators such as MACD, RSI, and KDJ.
+This is a Python application designed to fetch, store, and potentially analyze Chinese A-share stock market data. It primarily uses the Tushare API to retrieve historical stock price information and stores this data in a local SQLite database. The application uses forward-adjusted prices for accurate technical analysis and calculates technical indicators such as MACD, RSI14, and KDJ.
 
 ### Core Technologies
 
@@ -18,10 +18,10 @@ The project is structured into several modules:
 
 1.  **`main.py`**: The main entry point. It parses command-line arguments (stock code, date range) and initiates the data fetching process.
 2.  **`config.py`**: Loads environment variables (like the Tushare API token) and defines default settings (database name, default stock code, default date range).
-3.  **`api/tushare_client.py`**: Contains the `TushareClient` class, which wraps the Tushare Pro API calls, specifically for fetching daily stock price data.
+3.  **`api/tushare_client.py`**: Contains the `TushareClient` class, which wraps the Tushare Pro API calls, specifically for fetching daily stock price data with forward adjustment.
 4.  **`data/data_fetcher.py`**: Contains the `StockDataFetcher` class. This class orchestrates the workflow: it uses `TushareClient` to get data, checks the database for existing data using `DatabaseManager`, calculates technical indicators using `IndicatorCalculator`, and then saves both the raw data and indicators if needed.
 5.  **`database/db_manager.py`**: Contains the `DatabaseManager` class. It handles all interactions with the SQLite database, including initializing tables (`daily_price`, `indicators`) and saving/fetching data.
-6.  **`utils/indicator_calculator.py`**: Contains the `IndicatorCalculator` class, which calculates technical indicators (MACD, RSI, KDJ) based on stock price data.
+6.  **`utils/indicator_calculator.py`**: Contains the `IndicatorCalculator` class, which calculates technical indicators (MACD, RSI14, KDJ) based on stock price data.
 7.  **`scheduler/`**: An empty directory, likely intended for future scheduled task implementations (e.g., using `cron` or `APScheduler`).
 8.  **`utils/`**: Contains utility functions, including the technical indicator calculator.
 9.  **`.env`**: A file (created by the user from `.env.example`) to store sensitive information like the Tushare API token.
