@@ -1,6 +1,4 @@
-#-*- coding:utf-8 -*-
-"""
-Ashare API client for fetching real-time stock data.
+"""Ashare API client for fetching real-time stock data.
 Based on the open-source project Ashare: https://github.com/mpquant/Ashare
 """
 
@@ -16,29 +14,49 @@ class AshareClient:
         """Initialize the Ashare client."""
         print("--- Ashare API client initialized ---")
 
-    # 腾讯日线
     def _get_price_day_tx(self, code, end_date='', count=10, frequency='1d'):
-        """日线获取"""
+        """
+        Get daily price data from Tencent interface.
+        
+        Args:
+            code (str): Stock code.
+            end_date (str): End date in 'YYYY-MM-DD' format.
+            count (int): Number of data points.
+            frequency (str): Data frequency.
+            
+        Returns:
+            pandas.DataFrame: DataFrame with price data.
+        """
         unit = 'week' if frequency in '1w' else 'month' if frequency in '1M' else 'day'
-        # 判断日线，周线，月线
+        # Determine day, week, or month line
         if end_date:
             end_date = end_date.strftime('%Y-%m-%d') if isinstance(end_date, datetime.date) else end_date.split(' ')[0]
-        end_date = '' if end_date == datetime.datetime.now().strftime('%Y-%m-%d') else end_date  # 如果日期今天就变成空
+        end_date = '' if end_date == datetime.datetime.now().strftime('%Y-%m-%d') else end_date  # If date is today, make it empty
         URL = f'http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{unit},,{end_date},{count},qfq'
         st = json.loads(requests.get(URL).content)
         ms = 'qfq' + unit
         stk = st['data'][code]
-        buf = stk[ms] if ms in stk else stk[unit]  # 指数返回不是qfqday,是day
+        buf = stk[ms] if ms in stk else stk[unit]  # Index returns day, not qfqday
         df = pd.DataFrame(buf, columns=['time', 'open', 'close', 'high', 'low', 'volume'], dtype='float')
         df.time = pd.to_datetime(df.time)
         df.set_index(['time'], inplace=True)
-        df.index.name = ''  # 处理索引
+        df.index.name = ''  # Handle index
         return df
 
-    # 腾讯分钟线
     def _get_price_min_tx(self, code, end_date=None, count=10, frequency='1d'):
-        """分钟线获取"""
-        ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1  # 解析K线周期数
+        """
+        Get minute price data from Tencent interface.
+        
+        Args:
+            code (str): Stock code.
+            end_date (str): End date in 'YYYY-MM-DD' format.
+            count (int): Number of data points.
+            frequency (str): Data frequency.
+            
+        Returns:
+            pandas.DataFrame: DataFrame with price data.
+        """
+        ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1  # Parse K-line period
         if end_date:
             end_date = end_date.strftime('%Y-%m-%d') if isinstance(end_date, datetime.date) else end_date.split(' ')[0]
         URL = f'http://ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},m{ts},,{count}'
@@ -49,35 +67,49 @@ class AshareClient:
         df[['open', 'close', 'high', 'low', 'volume']] = df[['open', 'close', 'high', 'low', 'volume']].astype('float')
         df.time = pd.to_datetime(df.time)
         df.set_index(['time'], inplace=True)
-        df.index.name = ''  # 处理索引
-        df['close'][-1] = float(st['data'][code]['qt'][code][3])  # 最新基金数据是3位的
+        df.index.name = ''  # Handle index
+        df['close'][-1] = float(st['data'][code]['qt'][code][3])  # Latest fund data is 3 digits
         return df
 
-    # sina新浪全周期获取函数，分钟线 5m,15m,30m,60m  日线1d=240m   周线1w=1200m  1月=7200m
     def _get_price_sina(self, code, end_date='', count=10, frequency='60m'):
-        """新浪全周期获取函数"""
+        """
+        Get price data from Sina interface for all periods.
+        Minute lines: 5m, 15m, 30m, 60m
+        Daily line: 1d=240m
+        Weekly line: 1w=1200m
+        Monthly line: 1M=7200m
+        
+        Args:
+            code (str): Stock code.
+            end_date (str): End date in 'YYYY-MM-DD' format.
+            count (int): Number of data points.
+            frequency (str): Data frequency.
+            
+        Returns:
+            pandas.DataFrame: DataFrame with price data.
+        """
         frequency = frequency.replace('1d', '240m').replace('1w', '1200m').replace('1M', '7200m')
         mcount = count
-        ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1  # 解析K线周期数
+        ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1  # Parse K-line period
         if (end_date != '') & (frequency in ['240m', '1200m', '7200m']):
-            end_date = pd.to_datetime(end_date) if not isinstance(end_date, datetime.date) else end_date  # 转换成datetime
-            unit = 4 if frequency == '1200m' else 29 if frequency == '7200m' else 1  # 4,29多几个数据不影响速度
-            count = count + (datetime.datetime.now() - end_date).days // unit  # 结束时间到今天有多少天自然日(肯定 >交易日)
+            end_date = pd.to_datetime(end_date) if not isinstance(end_date, datetime.date) else end_date  # Convert to datetime
+            unit = 4 if frequency == '1200m' else 29 if frequency == '7200m' else 1  # 4, 29 - a few more data points don't affect speed
+            count = count + (datetime.datetime.now() - end_date).days // unit  # How many natural days from end date to today (definitely > trading days)
             # print(code,end_date,count)
         URL = f'http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={code}&scale={ts}&ma=5&datalen={count}'
         dstr = json.loads(requests.get(URL).content)
         # df=pd.DataFrame(dstr,columns=['day','open','high','low','close','volume'],dtype='float')
         df = pd.DataFrame(dstr, columns=['day', 'open', 'high', 'low', 'close', 'volume'])
         df['open'] = df['open'].astype(float)
-        df['high'] = df['high'].astype(float)  # 转换数据类型
+        df['high'] = df['high'].astype(float)  # Convert data types
         df['low'] = df['low'].astype(float)
         df['close'] = df['close'].astype(float)
         df['volume'] = df['volume'].astype(float)
         df.day = pd.to_datetime(df.day)
         df.set_index(['day'], inplace=True)
-        df.index.name = ''  # 处理索引
+        df.index.name = ''  # Handle index
         if (end_date != '') & (frequency in ['240m', '1200m', '7200m']):
-            return df[df.index <= end_date][-mcount:]  # 日线带结束时间先返回
+            return df[df.index <= end_date][-mcount:]  # Return daily line with end date first
         return df
 
     def get_price(self, code, frequency='1d', count=10, end_date=''):
@@ -93,24 +125,24 @@ class AshareClient:
         Returns:
             pandas.DataFrame: A DataFrame containing the price data.
         """
-        # 证券代码编码兼容处理
+        # Compatible processing of security code encoding
         xcode = code.replace('.XSHG', '').replace('.XSHE', '')
         xcode = 'sh' + xcode if ('XSHG' in code) else 'sz' + xcode if ('XSHE' in code) else code
 
-        if frequency in ['1d', '1w', '1M']:  # 1d日线  1w周线  1M月线
+        if frequency in ['1d', '1w', '1M']:  # 1d daily, 1w weekly, 1M monthly
             try:
-                return self._get_price_sina(xcode, end_date=end_date, count=count, frequency=frequency)  # 主力
-            except:
+                return self._get_price_sina(xcode, end_date=end_date, count=count, frequency=frequency)  # Primary
+            except requests.RequestException:
                 return self._get_price_day_tx(xcode, end_date=end_date, count=count,
-                                              frequency=frequency)  # 备用
+                                              frequency=frequency)  # Backup
 
-        if frequency in ['1m', '5m', '15m', '30m', '60m']:  # 分钟线 ,1m只有腾讯接口  5分钟5m   60分钟60m
+        if frequency in ['1m', '5m', '15m', '30m', '60m']:  # Minute lines, 1m only has Tencent interface, 5m 5 minutes, 60m 60 minutes
             if frequency in '1m':
                 return self._get_price_min_tx(xcode, end_date=end_date, count=count, frequency=frequency)
             try:
-                return self._get_price_sina(xcode, end_date=end_date, count=count, frequency=frequency)  # 主力
-            except:
-                return self._get_price_min_tx(xcode, end_date=end_date, count=count, frequency=frequency)  # 备用
+                return self._get_price_sina(xcode, end_date=end_date, count=count, frequency=frequency)  # Primary
+            except requests.RequestException:
+                return self._get_price_min_tx(xcode, end_date=end_date, count=count, frequency=frequency)  # Backup
 
         print(f"Unsupported frequency: {frequency}.")
         return pd.DataFrame()  # Return empty DataFrame for unsupported frequencies

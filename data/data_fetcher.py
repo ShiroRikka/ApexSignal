@@ -6,19 +6,19 @@ from api.tushare_client import TushareClient
 from api.ashare_client import AshareClient
 from database.db_manager import DatabaseManager
 from utils.indicator_calculator import IndicatorCalculator
+from utils.code_converter import convert_tushare_to_ashare_code
 from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 
-class StockDataFetcher:
-    """Orchestrates the fetching and storing of stock data."""
-
-    def __init__(self):
-        """Initialize the fetcher with API clients and database manager."""
-        self.tushare_client = TushareClient()
-        self.ashare_client = AshareClient()
-        self.db_manager = DatabaseManager()
-
-    def fetch_and_store_data_tushare(self, stock_code=DEFAULT_STOCK_CODE, days_back=DEFAULT_DAYS_BACK):
+class TushareDataFetcher:
+    """Handles data fetching and storing for Tushare API."""
+    
+    def __init__(self, db_manager):
+        """Initialize with database manager."""
+        self.client = TushareClient()
+        self.db_manager = db_manager
+    
+    def fetch_and_store(self, stock_code=DEFAULT_STOCK_CODE, days_back=DEFAULT_DAYS_BACK):
         """
         Fetch and store daily stock data for a given stock code using Tushare API.
 
@@ -38,7 +38,7 @@ class StockDataFetcher:
             print(f"Data for {stock_code} from {start_date} to {end_date} not found in {table_name} table. Fetching from API...")
             try:
                 # Call API to get daily price data
-                df_daily = self.tushare_client.get_daily_data(stock_code, start_date, end_date)
+                df_daily = self.client.get_daily_data(stock_code, start_date, end_date)
 
                 if df_daily is not None and not df_daily.empty:
                     print(f"Successfully fetched {len(df_daily)} daily records for {stock_code}.")
@@ -64,7 +64,16 @@ class StockDataFetcher:
         else:
             print(f"Data for {stock_code} from {start_date} to {end_date} already exists in {table_name} table. Skipping API call.")
 
-    def fetch_and_store_data_ashare(self, stock_code, days_back=DEFAULT_DAYS_BACK):
+
+class AshareDataFetcher:
+    """Handles data fetching and storing for Ashare API."""
+    
+    def __init__(self, db_manager):
+        """Initialize with database manager."""
+        self.client = AshareClient()
+        self.db_manager = db_manager
+    
+    def fetch_and_store(self, stock_code, days_back=DEFAULT_DAYS_BACK):
         """
         Fetch and store daily stock data for a given stock code using Ashare API.
 
@@ -73,14 +82,14 @@ class StockDataFetcher:
             days_back (int): The number of days back to fetch data from today.
         """
         # Format stock code for Ashare (e.g., 'sh601818')
-        formatted_code = f"sh{stock_code}" if stock_code.startswith('6') else f"sz{stock_code}"
+        formatted_code = convert_tushare_to_ashare_code(stock_code)
         table_name = 'daily_price_ashare'
         
         print(f"\n--- Fetching daily historical price data for {formatted_code} using Ashare ---")
         
         try:
             # Call Ashare API to get daily price data
-            df_daily = self.ashare_client.get_price(code=formatted_code, frequency='1d', count=days_back)
+            df_daily = self.client.get_price(code=formatted_code, frequency='1d', count=days_back)
             
             if df_daily is not None and not df_daily.empty:
                 print(f"Successfully fetched {len(df_daily)} daily records for {formatted_code}.")
@@ -125,3 +134,33 @@ class StockDataFetcher:
 
         except Exception as e:
             print(f"Error occurred while fetching data: {e}")
+
+
+class StockDataFetcher:
+    """Orchestrates the fetching and storing of stock data."""
+    
+    def __init__(self):
+        """Initialize the fetcher with API clients and database manager."""
+        self.db_manager = DatabaseManager()
+        self.tushare_fetcher = TushareDataFetcher(self.db_manager)
+        self.ashare_fetcher = AshareDataFetcher(self.db_manager)
+
+    def fetch_and_store_data_tushare(self, stock_code=DEFAULT_STOCK_CODE, days_back=DEFAULT_DAYS_BACK):
+        """
+        Fetch and store daily stock data for a given stock code using Tushare API.
+
+        Args:
+            stock_code (str): The stock code to fetch data for.
+            days_back (int): The number of days back to fetch data from today.
+        """
+        self.tushare_fetcher.fetch_and_store(stock_code, days_back)
+
+    def fetch_and_store_data_ashare(self, stock_code, days_back=DEFAULT_DAYS_BACK):
+        """
+        Fetch and store daily stock data for a given stock code using Ashare API.
+
+        Args:
+            stock_code (str): The stock code to fetch data for (e.g., '601818').
+            days_back (int): The number of days back to fetch data from today.
+        """
+        self.ashare_fetcher.fetch_and_store(stock_code, days_back)
