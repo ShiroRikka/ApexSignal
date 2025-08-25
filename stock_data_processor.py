@@ -36,35 +36,39 @@ def calculate_and_store_indicators(conn, stock_code, df):
     L = df['low'].values
     V = df['volume'].values
 
-    # Example indicators (you can add more as needed)
-    # MACD
+    # Calculate all indicators
     DIF, DEA, MACD_val = MACD(C)
-    for i in range(len(DIF)):
-        timestamp = df.index[i]
-        if not pd.isna(DIF[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'MACD_DIF', DIF[i])
-        if not pd.isna(DEA[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'MACD_DEA', DEA[i])
-        if not pd.isna(MACD_val[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'MACD', MACD_val[i])
-
-    # RSI
     RSI_val = RSI(C)
-    for i in range(len(RSI_val)):
-        timestamp = df.index[i]
-        if not pd.isna(RSI_val[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'RSI', RSI_val[i])
-
-    # KDJ
     K, D, J = KDJ(C, H, L)
-    for i in range(len(K)):
+
+    # Store all indicators for each timestamp
+    for i in range(len(df)):
         timestamp = df.index[i]
+        indicators_dict = {}
+        
+        # Add MACD indicators
+        if not pd.isna(DIF[i]):
+            indicators_dict['MACD_DIF'] = DIF[i]
+        if not pd.isna(DEA[i]):
+            indicators_dict['MACD_DEA'] = DEA[i]
+        if not pd.isna(MACD_val[i]):
+            indicators_dict['MACD'] = MACD_val[i]
+        
+        # Add RSI indicator
+        if not pd.isna(RSI_val[i]):
+            indicators_dict['RSI'] = RSI_val[i]
+        
+        # Add KDJ indicators
         if not pd.isna(K[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'KDJ_K', K[i])
+            indicators_dict['KDJ_K'] = K[i]
         if not pd.isna(D[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'KDJ_D', D[i])
+            indicators_dict['KDJ_D'] = D[i]
         if not pd.isna(J[i]):
-            insert_indicator_data(conn, stock_code, timestamp, 'KDJ_J', J[i])
+            indicators_dict['KDJ_J'] = J[i]
+        
+        # Insert all indicators for this timestamp
+        if indicators_dict:
+            insert_indicator_data(conn, stock_code, timestamp, indicators_dict)
 
     print(f"Successfully calculated and stored indicators for {stock_code}.")
 

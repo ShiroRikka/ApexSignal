@@ -85,3 +85,6 @@ stock_data_collector/
     ├── example1.py         # Usage examples
     └── README.md           # MyTT documentation
 ```
+
+## Qwen Added Memories
+- Ashare和MyTT文件夹中的内容禁止更改

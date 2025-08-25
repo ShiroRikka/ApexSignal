@@ -34,9 +34,14 @@ def create_tables(conn):
             CREATE TABLE IF NOT EXISTS indicators (
                 stock_code TEXT NOT NULL,
                 timestamp DATETIME NOT NULL,
-                indicator_name TEXT NOT NULL,
-                value REAL,
-                PRIMARY KEY (stock_code, timestamp, indicator_name),
+                MACD_DIF REAL,
+                MACD_DEA REAL,
+                MACD REAL,
+                RSI REAL,
+                KDJ_K REAL,
+                KDJ_D REAL,
+                KDJ_J REAL,
+                PRIMARY KEY (stock_code, timestamp),
                 FOREIGN KEY (stock_code, timestamp) REFERENCES stock_data (stock_code, timestamp)
             );
         """)
@@ -72,17 +77,64 @@ def insert_stock_data(conn, stock_code, df):
     except Error as e:
         print(f"Error inserting stock data for {stock_code}: {e}")
 
-def insert_indicator_data(conn, stock_code, timestamp, indicator_name, value):
-    """ Insert a single technical indicator value into the indicators table """
+def insert_indicator_data(conn, stock_code, timestamp, indicators_dict):
+    """ Insert technical indicators data into the indicators table """
     try:
         cursor = conn.cursor()
+        
+        # Check if record exists
         cursor.execute("""
-            INSERT OR REPLACE INTO indicators (stock_code, timestamp, indicator_name, value)
-            VALUES (?, ?, ?, ?)
-        """, (stock_code, timestamp.strftime('%Y-%m-%d %H:%M:%S'), indicator_name, value))
+            SELECT 1 FROM indicators WHERE stock_code = ? AND timestamp = ?
+        """, (stock_code, timestamp.strftime('%Y-%m-%d %H:%M:%S')))
+        exists = cursor.fetchone()
+        
+        if exists:
+            # Update existing record
+            update_query = """
+                UPDATE indicators SET
+                MACD_DIF = COALESCE(?, MACD_DIF),
+                MACD_DEA = COALESCE(?, MACD_DEA),
+                MACD = COALESCE(?, MACD),
+                RSI = COALESCE(?, RSI),
+                KDJ_K = COALESCE(?, KDJ_K),
+                KDJ_D = COALESCE(?, KDJ_D),
+                KDJ_J = COALESCE(?, KDJ_J)
+                WHERE stock_code = ? AND timestamp = ?
+            """
+            cursor.execute(update_query, (
+                indicators_dict.get('MACD_DIF'),
+                indicators_dict.get('MACD_DEA'),
+                indicators_dict.get('MACD'),
+                indicators_dict.get('RSI'),
+                indicators_dict.get('KDJ_K'),
+                indicators_dict.get('KDJ_D'),
+                indicators_dict.get('KDJ_J'),
+                stock_code,
+                timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            ))
+        else:
+            # Insert new record
+            insert_query = """
+                INSERT INTO indicators (
+                    stock_code, timestamp, MACD_DIF, MACD_DEA, MACD, 
+                    RSI, KDJ_K, KDJ_D, KDJ_J
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            cursor.execute(insert_query, (
+                stock_code,
+                timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                indicators_dict.get('MACD_DIF'),
+                indicators_dict.get('MACD_DEA'),
+                indicators_dict.get('MACD'),
+                indicators_dict.get('RSI'),
+                indicators_dict.get('KDJ_K'),
+                indicators_dict.get('KDJ_D'),
+                indicators_dict.get('KDJ_J')
+            ))
+        
         conn.commit()
     except Error as e:
-        print(f"Error inserting indicator data for {stock_code} ({indicator_name}): {e}")
+        print(f"Error inserting indicator data for {stock_code}: {e}")
 
 def get_stock_data(conn, stock_code, limit=None):
     """ Retrieve stock data for a given stock_code """
