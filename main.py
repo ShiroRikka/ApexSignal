@@ -17,7 +17,7 @@ def main():
         stock_codes = ['sh601818'] # Example: Ping An Bank (Shanghai stock)
         
         # Fetch frequency and count
-        frequency = 'daily' # Daily data for technical indicators
+        frequency = '1d' # Daily data for technical indicators
         count = 60       # Fetch last 60 days of data
         
         # Polling interval in seconds (e.g., 86400 seconds for daily data)

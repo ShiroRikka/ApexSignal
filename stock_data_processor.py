@@ -5,12 +5,18 @@ from Ashare.Ashare import get_price
 from MyTT.MyTT import * # Import all technical indicators
 from database_manager import create_connection, create_tables, insert_stock_data, insert_indicator_data, get_stock_data
 
-def fetch_and_store_stock_data(conn, stock_code, frequency='daily', count=60):
+def fetch_and_store_stock_data(conn, stock_code, frequency='1d', count=60):
     """ Fetches daily stock data using Ashare and stores it in the database. """
     print(f"Fetching {count} {frequency} data for {stock_code}...")
     try:
         # Ashare's get_price function returns a DataFrame
         df = get_price(code=stock_code, frequency=frequency, count=count)
+        
+        # Check if get_price returned None (API call might have failed)
+        if df is None:
+            print(f"Failed to fetch data for {stock_code}. API returned None.")
+            return pd.DataFrame()
+            
         if not df.empty:
             insert_stock_data(conn, stock_code, df)
             print(f"Successfully fetched and stored {len(df)} records for {stock_code}.")
@@ -82,7 +88,7 @@ if __name__ == '__main__':
         stock_code = '601818' # Replace with a valid stock code
         
         # Fetch and store data
-        stock_df = fetch_and_store_stock_data(conn, stock_code, frequency='daily', count=60) # Fetch 60 days of data
+        stock_df = fetch_and_store_stock_data(conn, stock_code, frequency='1d', count=60) # Fetch 60 days of data
         
         # Calculate and store indicators
         if not stock_df.empty:
