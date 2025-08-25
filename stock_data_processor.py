@@ -75,7 +75,7 @@ if __name__ == '__main__':
         create_tables(conn)
         
         # Example usage with a real stock code (e.g., Ping An Bank)
-        stock_code = '000001.XSHE' # Replace with a valid stock code
+        stock_code = '601818' # Replace with a valid stock code
         
         # Fetch and store data
         stock_df = fetch_and_store_stock_data(conn, stock_code, frequency='1m', count=60) # Fetch 60 minutes of data
