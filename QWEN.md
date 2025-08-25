@@ -44,3 +44,6 @@ Based on the project files, there isn't a single, clearly defined main entry poi
 - **Examples**: Usage examples are provided in `Ashare/Demo1.py` and `Ashare/Demo2.py`.
 - **Data Handling**: The project heavily relies on `pandas` DataFrames for data manipulation and `numpy` for numerical computations within `MyTT`.
 - **API Usage**: The `Ashare` library fetches data via HTTP requests to public financial APIs (Sina, Tencent).
+
+## Qwen Added Memories
+- 用户偏好：代码注释和终端打印内容尽量使用中文；功能实现追求代码简洁，优先保证核心功能可用，不处理异常抛出，方便用户理解代码逻辑。
