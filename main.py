@@ -14,7 +14,7 @@ def main():
         "--stock_code",
         type=str,
         default=DEFAULT_STOCK_CODE,
-        help=f"Stock code to fetch data for (e.g., 000001.SZ). Default is {DEFAULT_STOCK_CODE}."
+        help=f"Stock code to fetch data for (e.g., 601818.SH). Default is {DEFAULT_STOCK_CODE}."
     )
     parser.add_argument(
         "--days_back",
