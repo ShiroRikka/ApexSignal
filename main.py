@@ -2,6 +2,8 @@
 
 import argparse
 from data.data_fetcher import StockDataFetcher
+from data.ashare_data_fetcher import AshareDataFetcher
+from utils.code_converter import convert_tushare_to_ashare_code
 from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 def main():
@@ -19,11 +21,23 @@ def main():
         default=DEFAULT_DAYS_BACK,
         help=f"Number of days back to fetch data from today. Default is {DEFAULT_DAYS_BACK}."
     )
+    parser.add_argument(
+        "--api",
+        type=str,
+        choices=['tushare', 'ashare'],
+        default='tushare',
+        help="API to use for fetching data. Default is 'tushare'."
+    )
 
     args = parser.parse_args()
 
     print("--- Starting Stock Data Collector ---")
-    fetcher = StockDataFetcher()
+    
+    if args.api == 'tushare':
+        fetcher = StockDataFetcher()
+    else:
+        fetcher = AshareDataFetcher()
+        
     fetcher.fetch_and_store_data(stock_code=args.stock_code, days_back=args.days_back)
     print("--- Stock Data Collector finished ---")
 
