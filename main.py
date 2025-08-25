@@ -17,13 +17,13 @@ def main():
         stock_codes = ['sh601818'] # Example: Ping An Bank (Shanghai stock)
         
         # Fetch frequency and count
-        frequency = '1m' # 1-minute data
-        count = 60       # Fetch last 60 minutes of data
+        frequency = 'daily' # Daily data for technical indicators
+        count = 60       # Fetch last 60 days of data
         
-        # Polling interval in seconds (e.g., 60 seconds for 1-minute data)
-        polling_interval = 60
+        # Polling interval in seconds (e.g., 86400 seconds for daily data)
+        polling_interval = 86400
 
-        print(f"Starting real-time data collection for {stock_codes} every {polling_interval} seconds...")
+        print(f"Starting daily data collection for {stock_codes} every {polling_interval} seconds (once per day)...")
 
         try:
             while True:

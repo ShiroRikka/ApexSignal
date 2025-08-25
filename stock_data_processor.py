@@ -5,8 +5,8 @@ from Ashare.Ashare import get_price
 from MyTT.MyTT import * # Import all technical indicators
 from database_manager import create_connection, create_tables, insert_stock_data, insert_indicator_data, get_stock_data
 
-def fetch_and_store_stock_data(conn, stock_code, frequency='1m', count=10):
-    """ Fetches real-time stock data using Ashare and stores it in the database. """
+def fetch_and_store_stock_data(conn, stock_code, frequency='daily', count=60):
+    """ Fetches daily stock data using Ashare and stores it in the database. """
     print(f"Fetching {count} {frequency} data for {stock_code}...")
     try:
         # Ashare's get_price function returns a DataFrame
@@ -38,7 +38,7 @@ def calculate_and_store_indicators(conn, stock_code, df):
 
     # Calculate all indicators
     DIF, DEA, MACD_val = MACD(C)
-    RSI_val = RSI(C)
+    RSI_val = RSI(C, N=14)
     K, D, J = KDJ(C, H, L)
 
     # Store all indicators for each timestamp
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         stock_code = '601818' # Replace with a valid stock code
         
         # Fetch and store data
-        stock_df = fetch_and_store_stock_data(conn, stock_code, frequency='1m', count=60) # Fetch 60 minutes of data
+        stock_df = fetch_and_store_stock_data(conn, stock_code, frequency='daily', count=60) # Fetch 60 days of data
         
         # Calculate and store indicators
         if not stock_df.empty:
