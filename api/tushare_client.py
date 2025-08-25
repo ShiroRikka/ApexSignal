@@ -36,16 +36,36 @@ class TushareClient:
                 freq='D'   # Daily frequency
             )
             
+            # Check if data was fetched successfully
+            if df_daily is None or df_daily.empty:
+                print(f"Warning: No data returned from Tushare API for {ts_code}.")
+                return None
+            
             # Ensure we return the data with the expected columns
-            if df_daily is not None and not df_daily.empty:
-                # Reorder columns to match our expected format
-                expected_columns = ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount']
-                # Check if all expected columns exist in the DataFrame
-                missing_columns = set(expected_columns) - set(df_daily.columns)
-                if not missing_columns:
+            # Add ts_code column
+            df_daily['ts_code'] = ts_code
+            
+            # Reorder columns to match our expected format
+            expected_columns = ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount']
+            # Check if all expected columns exist in the DataFrame
+            missing_columns = set(expected_columns) - set(df_daily.columns)
+            if not missing_columns:
+                df_daily = df_daily[expected_columns]
+            else:
+                print(f"Warning: Missing columns in fetched data: {missing_columns}")
+                # If critical columns are missing, return None
+                critical_columns = {'trade_date', 'open', 'high', 'low', 'close', 'vol'}
+                if critical_columns.issubset(set(df_daily.columns)):
+                    # Add missing non-critical columns with default values
+                    for col in missing_columns:
+                        if col == 'amount':
+                            df_daily[col] = 0.0
+                        else:
+                            df_daily[col] = None
                     df_daily = df_daily[expected_columns]
                 else:
-                    print(f"Warning: Missing columns in fetched data: {missing_columns}")
+                    print(f"Error: Critical columns missing in fetched data: {critical_columns - set(df_daily.columns)}")
+                    return None
             
             return df_daily
         except Exception as e:
