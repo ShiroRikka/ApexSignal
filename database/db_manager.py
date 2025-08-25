@@ -215,3 +215,12 @@ class DatabaseManager:
         records = cursor.fetchall()
         conn.close()
         return records
+
+    def get_supported_sources(self):
+        """
+        Get a list of supported data sources.
+        
+        Returns:
+            list: A list of supported data sources.
+        """
+        return ['tushare', 'ashare']

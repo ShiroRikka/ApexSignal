@@ -14,6 +14,25 @@ class StockDataFetcher:
         self.db_manager = DatabaseManager()
         self.tushare_fetcher = TushareDataFetcher(self.db_manager)
         self.ashare_fetcher = AshareDataFetcher(self.db_manager)
+        # Map source names to fetcher instances
+        self.fetchers = {
+            'tushare': self.tushare_fetcher,
+            'ashare': self.ashare_fetcher
+        }
+
+    def fetch_and_store_data(self, source, stock_code=DEFAULT_STOCK_CODE, days_back=DEFAULT_DAYS_BACK):
+        """
+        Fetch and store daily stock data for a given stock code using the specified API.
+
+        Args:
+            source (str): Data source ('tushare' or 'ashare').
+            stock_code (str): The stock code to fetch data for.
+            days_back (int): The number of days back to fetch data from today.
+        """
+        if source in self.fetchers:
+            self.fetchers[source].fetch_and_store(stock_code, days_back)
+        else:
+            print(f"Unsupported data source: {source}")
 
     def fetch_and_store_data_tushare(self, stock_code=DEFAULT_STOCK_CODE, days_back=DEFAULT_DAYS_BACK):
         """
@@ -23,7 +42,7 @@ class StockDataFetcher:
             stock_code (str): The stock code to fetch data for.
             days_back (int): The number of days back to fetch data from today.
         """
-        self.tushare_fetcher.fetch_and_store(stock_code, days_back)
+        self.fetch_and_store_data('tushare', stock_code, days_back)
 
     def fetch_and_store_data_ashare(self, stock_code, days_back=DEFAULT_DAYS_BACK):
         """
@@ -33,7 +52,9 @@ class StockDataFetcher:
             stock_code (str): The stock code to fetch data for (e.g., '601818').
             days_back (int): The number of days back to fetch data from today.
         """
-        self.ashare_fetcher.fetch_and_store(stock_code, days_back)
+        # For Ashare, we expect a simpler stock code format like '601818'
+        formatted_stock_code = stock_code.split('.')[0] if '.' in stock_code else stock_code
+        self.fetch_and_store_data('ashare', formatted_stock_code, days_back)
         
     def view_latest_data(self, source, stock_code, limit=5):
         """
@@ -44,6 +65,11 @@ class StockDataFetcher:
             stock_code (str): The stock code.
             limit (int): The number of latest records to retrieve.
         """
+        # Validate source
+        if source not in self.db_manager.get_supported_sources():
+            print(f"Unsupported data source: {source}")
+            return
+            
         # For viewing, we need to use the correct stock code format for each source
         formatted_stock_code = stock_code if source == 'tushare' else stock_code.split('.')[0]
         

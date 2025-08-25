@@ -6,9 +6,10 @@ from api.tushare_client import TushareClient
 from database.db_manager import DatabaseManager
 from utils.indicator_calculator import IndicatorCalculator
 from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
+from data.data_fetcher_base import DataFetcher
 
 
-class TushareDataFetcher:
+class TushareDataFetcher(DataFetcher):
     """Handles data fetching and storing for Tushare API."""
     
     def __init__(self, db_manager):

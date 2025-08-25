@@ -45,12 +45,7 @@ def main():
         fetcher.view_latest_data(args.source, args.stock_code)
     else:
         # Fetch and store data based on the selected source
-        if args.source == 'tushare':
-            fetcher.fetch_and_store_data_tushare(args.stock_code, args.days_back)
-        elif args.source == 'ashare':
-            # For Ashare, we expect a simpler stock code format like '601818'
-            stock_code = args.stock_code.split('.')[0]  # Extract '601818' from '601818.SH'
-            fetcher.fetch_and_store_data_ashare(stock_code, args.days_back)
+        fetcher.fetch_and_store_data(args.source, args.stock_code, args.days_back)
 
 if __name__ == "__main__":
     # Ensure the database is initialized before doing anything else

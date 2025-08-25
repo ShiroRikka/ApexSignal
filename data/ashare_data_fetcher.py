@@ -8,9 +8,10 @@ from utils.indicator_calculator import IndicatorCalculator
 from utils.code_converter import convert_tushare_to_ashare_code
 from utils.ashare_data_processor import process_ashare_data  # Import the new utility function
 from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
+from data.data_fetcher_base import DataFetcher
 
 
-class AshareDataFetcher:
+class AshareDataFetcher(DataFetcher):
     """Handles data fetching and storing for Ashare API."""
     
     def __init__(self, db_manager):
