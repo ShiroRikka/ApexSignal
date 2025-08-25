@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import pandas as pd
-from Ashare import get_price
-from MyTT import KDJ, MACD, RSI
+from Ashare.Ashare import get_price
+from MyTT.MyTT import KDJ, MACD, RSI
 
 # 1. 获取光大银行sh601818的行情数据
 # 获取前120天的数据以及开盘当天的最新数据
@@ -45,5 +45,5 @@ print("\n带有技术指标的最后几行数据:")
 print(df.tail())
 
 # 可选：保存数据到CSV文件
-# df.to_csv(f'{code}_data_with_indicators.csv')
-# print(f"\n数据已保存到 {code}_data_with_indicators.csv")
+df.to_csv(f'{code}_data_with_indicators.csv')
+print(f"\n数据已保存到 {code}_data_with_indicators.csv")
