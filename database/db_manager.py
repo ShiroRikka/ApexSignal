@@ -20,9 +20,9 @@ class DatabaseManager:
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        # Create daily price data table
+        # Create daily price data table for Tushare
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS daily_price (
+            CREATE TABLE IF NOT EXISTS daily_price_tushare (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ts_code TEXT,
                 trade_date TEXT,
@@ -36,9 +36,42 @@ class DatabaseManager:
             )
         ''')
 
-        # Create indicators table
+        # Create daily price data table for Ashare
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS indicators (
+            CREATE TABLE IF NOT EXISTS daily_price_ashare (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts_code TEXT,
+                trade_date TEXT,
+                open REAL,
+                high REAL,
+                low REAL,
+                close REAL,
+                vol REAL,
+                amount REAL,
+                UNIQUE(ts_code, trade_date)
+            )
+        ''')
+
+        # Create indicators table for Tushare
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS indicators_tushare (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts_code TEXT,
+                trade_date TEXT,
+                macd_dif REAL,
+                macd_dea REAL,
+                macd_bar REAL,
+                rsi REAL,
+                kdj_k REAL,
+                kdj_d REAL,
+                kdj_j REAL,
+                UNIQUE(ts_code, trade_date)
+            )
+        ''')
+
+        # Create indicators table for Ashare
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS indicators_ashare (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ts_code TEXT,
                 trade_date TEXT,
@@ -55,36 +88,39 @@ class DatabaseManager:
 
         conn.commit()
         conn.close()
-        print(f"Database {self.db_name} initialized.")
+        print(f"Database {self.db_name} initialized with separate tables for each data source.")
 
-    def save_daily_price_data(self, df_daily):
+    def save_daily_price_data(self, df_daily, source='tushare'):
         """
         Save daily price data to the database.
 
         Args:
             df_daily (pandas.DataFrame): DataFrame containing daily price data.
+            source (str): Data source ('tushare' or 'ashare').
         """
         if df_daily is None or df_daily.empty:
             print("No daily price data to save.")
             return
 
+        table_name = f"daily_price_{source}"
         conn = self.get_connection()
         try:
             # Use 'append' mode with UNIQUE constraint to avoid duplicates
-            df_daily.to_sql('daily_price', conn, if_exists='append', index=False)
-            print(f"Successfully saved {len(df_daily)} daily price records to the database.")
+            df_daily.to_sql(table_name, conn, if_exists='append', index=False)
+            print(f"Successfully saved {len(df_daily)} daily price records to the {table_name} table.")
         except Exception as e:
             # This might catch duplicate data errors, which can be handled or ignored
-            print(f"Error saving daily price data to database (may contain duplicates): {e}")
+            print(f"Error saving daily price data to {table_name} table (may contain duplicates): {e}")
         finally:
             conn.close()
 
-    def save_indicators_data(self, df_indicators):
+    def save_indicators_data(self, df_indicators, source='tushare'):
         """
         Save indicators data to the database.
 
         Args:
             df_indicators (pandas.DataFrame): DataFrame containing indicators data.
+            source (str): Data source ('tushare' or 'ashare').
         """
         if df_indicators is None or df_indicators.empty:
             print("No indicators data to save.")
@@ -103,15 +139,16 @@ class DatabaseManager:
             return
         
         df_to_save = df_indicators[indicators_columns]
+        table_name = f"indicators_{source}"
 
         conn = self.get_connection()
         try:
             # Use 'append' mode with UNIQUE constraint to avoid duplicates
-            df_to_save.to_sql('indicators', conn, if_exists='append', index=False)
-            print(f"Successfully saved {len(df_to_save)} indicators records to the database.")
+            df_to_save.to_sql(table_name, conn, if_exists='append', index=False)
+            print(f"Successfully saved {len(df_to_save)} indicators records to the {table_name} table.")
         except Exception as e:
             # This might catch duplicate data errors, which can be handled or ignored
-            print(f"Error saving indicators data to database (may contain duplicates): {e}")
+            print(f"Error saving indicators data to {table_name} table (may contain duplicates): {e}")
         finally:
             conn.close()
 
@@ -119,7 +156,7 @@ class DatabaseManager:
         """
         Check if specific data already exists in the database.
 
-        For the 'daily_price' table, checks for data of a specific stock and date range.
+        For the 'daily_price' tables, checks for data of a specific stock and date range.
 
         Args:
             table_name (str): The name of the table to check.
@@ -133,20 +170,48 @@ class DatabaseManager:
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        if table_name == 'daily_price':
+        if table_name in ['daily_price_tushare', 'daily_price_ashare']:
             if start_date and end_date:
-                cursor.execute("""
-                    SELECT COUNT(*) FROM daily_price 
+                cursor.execute(f"""
+                    SELECT COUNT(*) FROM {table_name} 
                     WHERE ts_code = ? AND trade_date BETWEEN ? AND ?
                 """, (ts_code, start_date, end_date))
                 count = cursor.fetchone()[0]
                 # Simple check: if at least one record exists, consider data present
                 exists = count > 0
             else:
-                cursor.execute("SELECT 1 FROM daily_price WHERE ts_code = ?", (ts_code,))
+                cursor.execute(f"SELECT 1 FROM {table_name} WHERE ts_code = ?", (ts_code,))
                 exists = cursor.fetchone() is not None
         else:
             exists = False
 
         conn.close()
         return exists
+
+    def get_latest_data(self, base_table_name, source, ts_code, limit=5):
+        """
+        Get the latest data records for a specific stock from a table.
+
+        Args:
+            base_table_name (str): The base name of the table to query ('daily_price' or 'indicators').
+            source (str): Data source ('tushare' or 'ashare').
+            ts_code (str): The stock code.
+            limit (int): The number of latest records to retrieve.
+
+        Returns:
+            list: A list of tuples containing the latest records.
+        """
+        table_name = f"{base_table_name}_{source}"
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+            SELECT * FROM {table_name}
+            WHERE ts_code = ?
+            ORDER BY trade_date DESC
+            LIMIT ?
+        """, (ts_code, limit))
+        
+        records = cursor.fetchall()
+        conn.close()
+        return records
