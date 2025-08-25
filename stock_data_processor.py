@@ -5,7 +5,7 @@ from Ashare.Ashare import get_price
 from MyTT.MyTT import * # Import all technical indicators
 from database_manager import create_connection, create_tables, insert_stock_data, insert_indicator_data, get_stock_data
 
-def fetch_historical_daily_data(conn, stock_code, count=59):
+def fetch_historical_daily_data(conn, stock_code, count=250):
     """ Fetches historical daily data and stores it in the database. """
     print(f"Fetching {count} days of historical daily data for {stock_code}...")
     try:
@@ -166,8 +166,8 @@ if __name__ == '__main__':
         # Example usage with a real stock code (e.g., Ping An Bank)
         stock_code = 'sh601818' # Replace with a valid stock code
         
-        # Fetch and store historical data (e.g., 59 days)
-        historical_df = fetch_historical_daily_data(conn, stock_code, count=59)
+        # Fetch and store historical data (e.g., 1 year / 250 trading days)
+        historical_df = fetch_historical_daily_data(conn, stock_code, count=250)
         
         # Simulate fetching intraday data
         intraday_df = fetch_intraday_data(stock_code, frequency='1m', count=1)

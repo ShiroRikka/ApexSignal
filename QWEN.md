@@ -1,90 +1,165 @@
-# Stock Data Collector Project Context
+# Stock Data Collector Project
 
 ## Project Overview
 
-This project is a Python application designed to fetch, store, and analyze Chinese A-share stock market data. It primarily utilizes two data sources:
+This is a Python application designed to fetch, store, and analyze Chinese A-share stock market data. The project provides a comprehensive solution for collecting historical and real-time stock data, calculating technical indicators, and storing everything in a structured SQLite database.
 
-1.  **Tushare**: A professional financial data platform requiring an API token.
-2.  **Ashare**: A lightweight, open-source API for real-time A-share market data, included as a submodule. It fetches data from sources like Sina Finance and Tencent Stock, providing automatic failover. It's designed for simplicity and portability.
+### Key Features
+- **Historical Data Collection**: Fetches daily historical stock data (default: 59 days) for specified stocks
+- **Real-time Monitoring**: Continuously monitors stocks with configurable polling intervals (default: 60 seconds)
+- **Technical Analysis**: Calculates and stores popular technical indicators including MACD, RSI, and KDJ
+- **Data Persistence**: Uses SQLite database with proper schema for stock data and indicators
+- **Multiple API Support**: Integrates with Tushare and Ashare APIs for data fetching
 
-The project also includes `MyTT`, a Python implementation of common technical analysis indicators (like MA, BOLL, MACD) originally found in platforms like Tongdaxin or Tushare's formula language. This is also included as a submodule.
+### Architecture
+The project follows a modular architecture with clear separation of concerns:
+- `main.py`: Entry point and orchestration logic
+- `database_manager.py`: Database operations and schema management
+- `stock_data_processor.py`: Data fetching and technical indicator calculations
+- `Ashare/`: Third-party library for Chinese stock market data (git-ignored)
+- `MyTT/`: Technical analysis library for calculating indicators (git-ignored)
 
-Key files and directories:
-*   `pyproject.toml`, `requirements.txt`: Define project dependencies (numpy, pandas, requests, tushare, akshare, baostock, python-dotenv).
-*   `.env.example`: Template for storing the Tushare API token.
-*   `Ashare/`: Submodule containing the Ashare API (`Ashare.py`) and demo scripts (`Demo1.py`, `Demo2.py`).
-*   `MyTT/`: Submodule containing the MyTT technical analysis library (`MyTT.py`).
+## Technologies Used
+
+### Core Dependencies
+- **Python 3.13+**: Main programming language
+- **SQLite**: Database for data persistence
+- **Pandas**: Data manipulation and analysis
+- **NumPy**: Numerical computing support
+
+### External APIs & Libraries
+- **Tushare (>=1.4.23)**: Chinese financial data API
+- **Ashare**: Custom library for A-share data fetching
+- **MyTT**: Technical analysis library for Chinese stock market
+- **akshare (>=1.17.41)**: Alternative data source
+- **baostock (>=0.8.9)**: Additional data source option
+
+### Utilities
+- **python-dotenv (>=1.1.1)**: Environment variable management
+- **requests (>=2.32.5)**: HTTP client for API calls
 
 ## Building and Running
 
-This project is written in Python (requires Python >= 3.13 as per `pyproject.toml`).
+### Prerequisites
+- Python 3.13 or higher
+- Package manager (uv recommended, pip also supported)
 
-1.  **Setup Environment:**
-    *   Ensure Python 3.13+ is installed.
-    *   It's recommended to use a virtual environment: `python -m venv venv` and activate it (`venv\Scripts\activate` on Windows).
-    *   Install dependencies. You can use `pip install -r requirements.txt` or `uv` if preferred (as hinted by `uv.lock`).
-2.  **Configuration:**
-    *   Copy `.env.example` to `.env`.
-    *   Edit `.env` and add your Tushare token if you plan to use the Tushare API.
-3.  **Running Demos:**
-    *   Navigate to the `Ashare` directory.
-    *   Run the demo scripts to test data fetching: `python Demo1.py` or `python Demo2.py`. `Demo2.py` also demonstrates using `MyTT` for technical indicators and plotting.
-4.  **Running Main Application:**
-    *   Run `python main.py` to start the real-time data collection service. This will:
-        *   Create a SQLite database (`stock_data.db`) if it doesn't exist.
-        *   Fetch stock data at specified intervals (default: 1 minute).
-        *   Calculate and store technical indicators.
-        *   Monitor stock codes defined in `main.py` (currently set to '601818.SH' - Ping An Bank).
+### Setup
+1. **Install dependencies**:
+   ```bash
+   # Using uv (recommended)
+   uv sync
+   
+   # Or using pip
+   pip install -r requirements.txt
+   ```
+
+2. **Environment Configuration**:
+   - Copy `.env.example` to `.env`
+   - Add your Tushare API token:
+     ```
+     TUSHARE_TOKEN=your_actual_tushare_token_here
+     ```
+
+### Running the Application
+```bash
+python main.py
+```
+
+The application will:
+1. Initialize the SQLite database (`stock_data.db`)
+2. Create necessary tables if they don't exist
+3. Fetch 59 days of historical data for configured stocks
+4. Start real-time monitoring with 60-second intervals
+5. Calculate and store technical indicators
+
+### Default Configuration
+- **Stock Codes**: Currently monitors `sh601818` (Ping An Bank)
+- **Historical Data**: 1 year (approximately 250 trading days) of daily data
+- **Real-time Frequency**: 1-minute intraday data
+- **Polling Interval**: 60 seconds
+- **Database**: `stock_data.db` (SQLite)
 
 ## Development Conventions
 
-*   **Dependencies:** Dependencies are managed via `pyproject.toml` and `requirements.txt`. The `uv.lock` file suggests `uv` might be the preferred package manager.
-*   **Data Access:** The project supports multiple data sources (Tushare, Ashare). Ashare is self-contained in its directory.
-*   **Technical Analysis:** The `MyTT` library provides a set of technical indicators compatible with common formula languages. It's designed to work with data fetched by libraries like Ashare.
-*   **Submodules:** `Ashare` and `MyTT` are included as Git submodules, indicating they are separate, maintained projects integrated into this one.
-*   **Database:** Uses SQLite for data storage with two main tables:
-    *   `stock_data`: Stores OHLCV (Open, High, Low, Close, Volume) data.
-    *   `indicators`: Stores calculated technical indicator values.
-*   **Configuration:** Environment variables are used for sensitive data like API tokens (Tushare).
-*   **Code Structure:**
-    *   `main.py`: Entry point for the real-time data collection service.
-    *   `database_manager.py`: Handles all database operations (connection, table creation, data insertion/retrieval).
-    *   `stock_data_processor.py`: Contains the core logic for fetching stock data and calculating technical indicators.
-*   **Ignored Files:** The `.gitignore` file excludes virtual environments, environment files, IDE configurations, Python cache files, and database files from version control.
+### Code Structure
+- **Modular Design**: Each module has a single responsibility
+- **Database First**: SQLite schema is defined in `database_manager.py`
+- **Error Handling**: Comprehensive try-catch blocks with meaningful error messages
+- **Data Validation**: Checks for empty DataFrames and None API responses
 
-## Key Features
+### Database Schema
+The application uses two main tables:
 
-*   **Real-time Data Collection:** Continuously fetches stock market data at configurable intervals.
-*   **Multiple Data Sources:** Supports both Tushare (professional) and Ashare (open-source) APIs.
-*   **Technical Analysis:** Automatically calculates and stores common technical indicators (MACD, RSI, KDJ, etc.) using the MyTT library.
-*   **Data Persistence:** Stores all collected data and calculated indicators in a SQLite database for historical analysis.
-*   **Modular Design:** Clean separation of concerns between data fetching, processing, and storage.
-*   **Easy Configuration:** Simple environment variable setup for API tokens.
-
-## File Structure
-
-```
-stock_data_collector/
-├── .env.example              # Environment variables template
-├── .gitignore               # Git ignore rules
-├── database_manager.py      # Database operations
-├── main.py                  # Main application entry point
-├── pyproject.toml           # Project configuration and dependencies
-├── QWEN.md                  # This context file
-├── README.md                # Project documentation (empty)
-├── requirements.txt         # Python dependencies
-├── stock_data_processor.py  # Data fetching and processing logic
-├── uv.lock                  # uv package manager lock file
-├── Ashare/                  # Ashare API submodule
-│   ├── Ashare.py           # Core Ashare API implementation
-│   ├── Demo1.py            # Basic usage demo
-│   ├── Demo2.py            # Advanced demo with MyTT integration
-│   └── README.md           # Ashare documentation
-└── MyTT/                    # MyTT technical analysis submodule
-    ├── MyTT.py             # Core MyTT library
-    ├── example1.py         # Usage examples
-    └── README.md           # MyTT documentation
+#### stock_data table
+```sql
+CREATE TABLE stock_data (
+    stock_code TEXT NOT NULL,
+    timestamp DATETIME NOT NULL,
+    open REAL,
+    close REAL,
+    high REAL,
+    low REAL,
+    volume REAL,
+    PRIMARY KEY (stock_code, timestamp)
+);
 ```
 
-## Qwen Added Memories
-- Ashare和MyTT文件夹中的内容禁止更改
+#### indicators table
+```sql
+CREATE TABLE indicators (
+    stock_code TEXT NOT NULL,
+    timestamp DATETIME NOT NULL,
+    MACD_DIF REAL,
+    MACD_DEA REAL,
+    MACD REAL,
+    RSI REAL,
+    KDJ_K REAL,
+    KDJ_D REAL,
+    KDJ_J REAL,
+    PRIMARY KEY (stock_code, timestamp),
+    FOREIGN KEY (stock_code, timestamp) REFERENCES stock_data (stock_code, timestamp)
+);
+```
+
+### Technical Indicators
+The project calculates and stores the following technical indicators:
+- **MACD**: Moving Average Convergence Divergence (DIF, DEA, MACD histogram)
+- **RSI**: Relative Strength Index (14-period)
+- **KDJ**: Stochastic Oscillator (K, D, J lines)
+
+### Data Flow
+1. **Initialization**: Fetch 1 year of historical daily data for all monitored stocks
+2. **Real-time Loop**:
+   - Fetch latest intraday data point
+   - Combine with historical data
+   - Recalculate all technical indicators
+   - Store latest indicator values
+   - Wait for next polling interval
+
+### Error Handling
+- API failures are caught and logged without crashing the application
+- Database integrity errors are handled gracefully
+- Empty or None data responses are checked before processing
+
+### Testing
+The project includes test code in `__main__` blocks for standalone testing of individual modules:
+- `database_manager.py`: Test database creation and data insertion
+- `stock_data_processor.py`: Test data fetching and indicator calculation
+
+## Configuration Notes
+
+### Environment Variables
+- `TUSHARE_TOKEN`: Required for Tushare API access
+- The application can work with Ashare API without additional configuration
+
+### Customization
+To monitor different stocks or change settings:
+1. Modify the `stock_codes` list in `main.py`
+2. Adjust `intraday_frequency` and `polling_interval` as needed
+3. Change the historical data `count` parameter (default: 250 trading days ≈ 1 year)
+
+### Database Management
+- The database file `stock_data.db` is created automatically
+- Tables are created if they don't exist on application start
+- Data insertion handles duplicates gracefully with upsert logic

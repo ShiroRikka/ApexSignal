@@ -18,11 +18,11 @@ def main():
         print("\n--- Initialization Phase: Fetching Historical Data ---")
         historical_data_map = {} # To store historical DataFrames for each stock
         for stock_code in stock_codes:
-            # Fetch 59 days of historical data. This data is static for the day.
+            # Fetch 1 year (approximately 250 trading days) of historical data. This data is static for the day.
             # We assume get_stock_data can retrieve this, or we fetch it fresh.
             # For simplicity, we fetch it fresh every time the script starts.
             # A more advanced system would check if historical data is already up-to-date.
-            historical_df = fetch_historical_daily_data(conn, stock_code, count=59)
+            historical_df = fetch_historical_daily_data(conn, stock_code, count=250)
             if not historical_df.empty:
                 historical_data_map[stock_code] = historical_df
             else:
