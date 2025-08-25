@@ -3,5 +3,7 @@
 .idea
 __pycache__
 .qwen
+MyTT
+Ashare
 # Database files
 *.db

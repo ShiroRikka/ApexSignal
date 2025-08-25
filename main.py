@@ -14,7 +14,7 @@ def main():
         # List of stock codes to monitor (example: Ping An Bank, Kweichow Moutai)
         # Note: Ashare uses 'sh' or 'sz' prefix for some functions, and '.XSHG' or '.XSHE' suffix for others.
         # The get_price function in Ashare.py handles this conversion internally.
-        stock_codes = ['601818.SH'] # Example: Ping An Bank, Kweichow Moutai, China Merchants Bank
+        stock_codes = ['sh601818'] # Example: Ping An Bank (Shanghai stock)
         
         # Fetch frequency and count
         frequency = '1m' # 1-minute data
