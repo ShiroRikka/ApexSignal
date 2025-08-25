@@ -1,1 +1,0 @@
-"""Stock Data Collector project."""

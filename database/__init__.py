@@ -1,1 +1,0 @@
-"""Database management for the stock data collector."""
