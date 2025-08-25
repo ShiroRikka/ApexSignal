@@ -1,4 +1,4 @@
-"""Orchestrates the fetching and storing of stock data from multiple APIs."""
+"""Orchestrates the fetching, storing, and viewing of stock data from multiple APIs."""
 
 from database.db_manager import DatabaseManager
 from data.tushare_data_fetcher import TushareDataFetcher
@@ -7,7 +7,7 @@ from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 
 
 class StockDataFetcher:
-    """Orchestrates the fetching and storing of stock data."""
+    """Orchestrates the fetching, storing, and viewing of stock data."""
     
     def __init__(self):
         """Initialize the fetcher with API clients and database manager."""
@@ -34,3 +34,31 @@ class StockDataFetcher:
             days_back (int): The number of days back to fetch data from today.
         """
         self.ashare_fetcher.fetch_and_store(stock_code, days_back)
+        
+    def view_latest_data(self, source, stock_code, limit=5):
+        """
+        View the latest data records for a specific stock.
+
+        Args:
+            source (str): Data source ('tushare' or 'ashare').
+            stock_code (str): The stock code.
+            limit (int): The number of latest records to retrieve.
+        """
+        # For viewing, we need to use the correct stock code format for each source
+        formatted_stock_code = stock_code if source == 'tushare' else stock_code.split('.')[0]
+        
+        print(f"\n--- Latest Daily Price Data from {source} ---")
+        daily_records = self.db_manager.get_latest_data('daily_price', source, formatted_stock_code, limit)
+        if daily_records:
+            for record in daily_records:
+                print(record)
+        else:
+            print("No daily price data found for the specified stock code.")
+            
+        print(f"\n--- Latest Indicators Data from {source} ---")
+        indicator_records = self.db_manager.get_latest_data('indicators', source, formatted_stock_code, limit)
+        if indicator_records:
+            for record in indicator_records:
+                print(record)
+        else:
+            print("No indicators data found for the specified stock code.")

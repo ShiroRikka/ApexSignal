@@ -8,7 +8,7 @@ from config import DEFAULT_STOCK_CODE, DEFAULT_DAYS_BACK
 from database.db_manager import DatabaseManager
 
 def main():
-    """Main function to parse arguments and initiate data fetching."""
+    """Main function to parse arguments and initiate data fetching or viewing."""
     parser = argparse.ArgumentParser(description="Stock Data Collector")
     parser.add_argument(
         "--stock_code",
@@ -40,36 +40,17 @@ def main():
     # Initialize the data fetcher
     fetcher = StockDataFetcher()
     
-    # Fetch and store data based on the selected source
-    if not args.view:
+    if args.view:
+        # View latest data records
+        fetcher.view_latest_data(args.source, args.stock_code)
+    else:
+        # Fetch and store data based on the selected source
         if args.source == 'tushare':
             fetcher.fetch_and_store_data_tushare(args.stock_code, args.days_back)
         elif args.source == 'ashare':
             # For Ashare, we expect a simpler stock code format like '601818'
             stock_code = args.stock_code.split('.')[0]  # Extract '601818' from '601818.SH'
             fetcher.fetch_and_store_data_ashare(stock_code, args.days_back)
-    else:
-        # View latest data records
-        db_manager = DatabaseManager()
-        source = args.source
-        # For viewing, we need to use the correct stock code format for each source
-        stock_code = args.stock_code if source == 'tushare' else args.stock_code.split('.')[0]
-        
-        print(f"\n--- Latest Daily Price Data from {source} ---")
-        daily_records = db_manager.get_latest_data('daily_price', source, stock_code, 5)
-        if daily_records:
-            for record in daily_records:
-                print(record)
-        else:
-            print("No daily price data found for the specified stock code.")
-            
-        print(f"\n--- Latest Indicators Data from {source} ---")
-        indicator_records = db_manager.get_latest_data('indicators', source, stock_code, 5)
-        if indicator_records:
-            for record in indicator_records:
-                print(record)
-        else:
-            print("No indicators data found for the specified stock code.")
 
 if __name__ == "__main__":
     # Ensure the database is initialized before doing anything else
