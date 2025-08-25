@@ -1,7 +1,7 @@
 import time
 import datetime
-from database_manager import create_connection, create_tables
-from stock_data_processor import fetch_and_store_stock_data, calculate_and_store_indicators
+from database_manager import create_connection, create_tables, get_stock_data
+from stock_data_processor import fetch_historical_daily_data, fetch_intraday_data, calculate_and_store_indicators_from_combined_data
 
 def main():
     db_file = "stock_data.db"
@@ -11,38 +11,55 @@ def main():
         create_tables(conn)
         print(f"Database '{db_file}' and tables are ready.")
 
-        # List of stock codes to monitor (example: Ping An Bank, Kweichow Moutai)
-        # Note: Ashare uses 'sh' or 'sz' prefix for some functions, and '.XSHG' or '.XSHE' suffix for others.
-        # The get_price function in Ashare.py handles this conversion internally.
+        # List of stock codes to monitor
         stock_codes = ['sh601818'] # Example: Ping An Bank (Shanghai stock)
         
-        # Fetch frequency and count
-        frequency = '1d' # Daily data for technical indicators
-        count = 60       # Fetch last 60 days of data
+        # --- Initialization Phase ---
+        print("\n--- Initialization Phase: Fetching Historical Data ---")
+        historical_data_map = {} # To store historical DataFrames for each stock
+        for stock_code in stock_codes:
+            # Fetch 59 days of historical data. This data is static for the day.
+            # We assume get_stock_data can retrieve this, or we fetch it fresh.
+            # For simplicity, we fetch it fresh every time the script starts.
+            # A more advanced system would check if historical data is already up-to-date.
+            historical_df = fetch_historical_daily_data(conn, stock_code, count=59)
+            if not historical_df.empty:
+                historical_data_map[stock_code] = historical_df
+            else:
+                print(f"Could not fetch historical data for {stock_code}. Skipping this stock.")
         
-        # Polling interval in seconds (e.g., 86400 seconds for daily data)
-        polling_interval = 86400
+        if not historical_data_map:
+            print("No historical data fetched for any stock. Exiting.")
+            conn.close()
+            return
 
-        print(f"Starting daily data collection for {stock_codes} every {polling_interval} seconds (once per day)...")
+        # --- Real-time Monitoring Phase ---
+        print("\n--- Real-time Monitoring Phase ---")
+        # Intraday frequency and polling interval
+        intraday_frequency = '1m' # 1-minute data for real-time updates
+        polling_interval = 60    # Poll every 60 seconds
+
+        print(f"Starting real-time monitoring for {list(historical_data_map.keys())} every {polling_interval} seconds...")
+        print(f"Using historical data (59 days) + latest intraday data ('{intraday_frequency}') for indicator calculation.")
 
         try:
             while True:
                 current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                print(f"\n[{current_time}] Fetching and processing data...")
+                print(f"\n[{current_time}] Fetching intraday data and updating indicators...")
                 
-                for stock_code in stock_codes:
-                    # Fetch and store stock data
-                    stock_df = fetch_and_store_stock_data(conn, stock_code, frequency, count)
+                for stock_code, historical_df in historical_data_map.items():
+                    # Fetch the latest intraday data point
+                    intraday_df = fetch_intraday_data(stock_code, frequency=intraday_frequency, count=1)
                     
-                    # Calculate and store indicators if data was fetched
-                    if not stock_df.empty:
-                        calculate_and_store_indicators(conn, stock_code, stock_df)
+                    # Calculate and store indicators based on combined data
+                    # This function now handles the logic of combining and calculating
+                    calculate_and_store_indicators_from_combined_data(conn, stock_code, historical_df, intraday_df)
                 
                 print(f"Waiting for {polling_interval} seconds...")
                 time.sleep(polling_interval)
 
         except KeyboardInterrupt:
-            print("Stopping data collection.")
+            print("\nStopping data collection.")
         finally:
             conn.close()
             print("Database connection closed.")
