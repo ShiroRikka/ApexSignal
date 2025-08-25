@@ -23,13 +23,13 @@ HIGH = df['high'].values
 LOW = df['low'].values
 
 # 计算KDJ
-K, D, J = KDJ(CLOSE, HIGH, LOW)
+K, D, J = KDJ(CLOSE, HIGH, LOW, 9, 3, 3)
 
 # 计算MACD
-DIF, DEA, MACD_LINE = MACD(CLOSE)
+DIF, DEA, MACD_LINE = MACD(CLOSE,12,26,9)
 
 # 计算RSI
-RSI_VALUE = RSI(CLOSE)
+RSI_VALUE = RSI(CLOSE,14)
 
 # 将计算得到的技术指标添加到原始DataFrame中
 df['K'] = K
