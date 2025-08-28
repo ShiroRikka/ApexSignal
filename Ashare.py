@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-    --------------Ashare 股票行情数据双核心版( https://github.com/mpquant/Ashare )
+# -*- coding:utf-8 -*-    --------------Ashare 股票行情数据双核心版修复版( https://github.com/ShiroRikka/ApexSignal )
 import json, requests, datetime
 import pandas as pd  #
 
@@ -55,7 +55,7 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
 
 
 # 腾讯分钟线
-def get_price_min_tx(code, end_date=None, count=10, frequency="1d"):  # 分钟线获取
+def get_price_min_tx(code, end_date=None, count=1, frequency="1d"):  # 分钟线获取
     ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1  # 解析K线周期数
     if end_date:
         end_date = (
