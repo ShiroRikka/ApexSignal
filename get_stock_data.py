@@ -2,7 +2,7 @@
 import json
 import requests
 import pandas as pd
-from MyTT.MyTT import KDJ, MACD, RSI
+from MyTT import KDJ, MACD, RSI
 
 def get_price_day_tx_fixed(code, end_date='', count=10, frequency='1d'):
     """修复版的腾讯日线获取函数"""
