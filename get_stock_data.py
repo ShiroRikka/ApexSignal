@@ -27,7 +27,7 @@ LOW = df["low"].values
 K, D, J = KDJ(CLOSE, HIGH, LOW, 9, 3, 3)
 
 # 计算MACD (需要至少26天数据)
-DIF, DEA, MACD_LINE = MACD(CLOSE, 12, 26, 9)
+DIF, DEA, MACD = MACD(CLOSE, 12, 26, 9)
 
 # 计算RSI (需要至少14天数据)
 RSI_VALUE = RSI(CLOSE, 14)
@@ -39,7 +39,7 @@ df["D"] = D
 df["J"] = J
 df["DIF"] = DIF
 df["DEA"] = DEA
-df["MACD"] = MACD_LINE
+df["MACD"] = MACD
 df["RSI"] = RSI_VALUE
 
 # 打印带有技术指标的DataFrame的最后几行
