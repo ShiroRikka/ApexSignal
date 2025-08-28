@@ -22,9 +22,20 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     ms = "qfq" + unit
     stk = st["data"][code]
     buf = stk[ms] if ms in stk else stk[unit]  # 指数返回不是qfqday,是day
-    df = pd.DataFrame(
-        buf, columns=["time", "open", "close", "high", "low", "volume"]
-    )
+    dividend_info = [item for item in buf if isinstance(item, (list, tuple)) and any(isinstance(x, dict) for x in item)]
+    if dividend_info:
+        print(f"Info: 发现 {len(dividend_info)} 条分红记录")
+    cleaned_buf = [item for item in buf if
+                   isinstance(item, (list, tuple)) and len(item) >= 6 and not any(isinstance(x, dict) for x in item)]
+    data = {
+        "time": [item[0] for item in cleaned_buf],
+        "open": [item[1] for item in cleaned_buf],
+        "close": [item[2] for item in cleaned_buf],
+        "high": [item[3] for item in cleaned_buf],
+        "low": [item[4] for item in cleaned_buf],
+        "volume": [item[5] for item in cleaned_buf],
+    }
+    df = pd.DataFrame(data)
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
     df.index.name = ""  # 处理索引
@@ -138,7 +149,7 @@ def get_price(
 
 
 if __name__ == "__main__":
-    df = get_price("sh601818", frequency="1d", count=10)  # 支持'1d'日, '1w'周, '1M'月
+    df = get_price("sh601818", frequency="1d", count=100)  # 支持'1d'日, '1w'周, '1M'月
     print("上证指数日线行情\n", df)
 
     df = get_price(
