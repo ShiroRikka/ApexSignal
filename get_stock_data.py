@@ -51,24 +51,6 @@ print(df.head())
 print("...")
 print(df.tail())
 
-# 检查数据复权情况
-print(f"\n数据复权情况检查:")
-print(f"数据形状: {df.shape}")
-print(f"数据日期范围: {df.index.min()} 到 {df.index.max()}")
-print(f"最新收盘价: {df['close'].iloc[-1]}")
-print(f"最早收盘价: {df['close'].iloc[0]}")
-
-# 检查是否有除权迹象（价格突然大幅变动）
-price_changes = df['close'].pct_change().abs()
-large_changes = price_changes[price_changes > 0.15]  # 超过15%的价格变动
-if len(large_changes) > 0:
-    print(f"发现 {len(large_changes)} 个大幅价格变动（可能除权）:")
-    print(large_changes)
-else:
-    print("未发现明显的除权迹象")
-
-print(f"\n确认：此数据来自腾讯接口，明确为前复权数据")
-
 # 2. 计算技术指标: KDJ, MACD, RSI
 # 准备数据
 CLOSE = df['close'].values
@@ -94,14 +76,8 @@ df['DEA'] = DEA
 df['MACD'] = MACD_LINE
 df['RSI'] = RSI_VALUE
 
-# 显示有效数据统计信息
-print("\n技术指标数据统计:")
-print(f"KDJ有效数据点: {df[['K', 'D', 'J']].notna().sum().iloc[0]} (前9天为NaN)")
-print(f"MACD有效数据点: {df[['DIF', 'DEA', 'MACD']].notna().sum().iloc[0]} (前26天为NaN)")
-print(f"RSI有效数据点: {df['RSI'].notna().sum()} (前14天为NaN)")
-
 # 打印带有技术指标的DataFrame的最后几行
-print("\n带有技术指标的最后几行数据:")
+print("\n技术指标的最后几行数据:")
 print(df.tail())
 
 # 可选：保存数据到CSV文件
