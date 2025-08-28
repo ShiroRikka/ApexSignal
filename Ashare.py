@@ -36,6 +36,7 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
         "volume": [item[5] for item in cleaned_buf],
     }
     df = pd.DataFrame(data)
+    df[["open", "close", "high", "low", "volume"]] = df[["open", "close", "high", "low", "volume"]].astype(float)
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
     df.index.name = ""  # 处理索引
