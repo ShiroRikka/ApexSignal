@@ -23,7 +23,7 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     stk = st["data"][code]
     buf = stk[ms] if ms in stk else stk[unit]  # 指数返回不是qfqday,是day
     df = pd.DataFrame(
-        buf, columns=["time", "open", "close", "high", "low", "volume"], dtype="float"
+        buf, columns=["time", "open", "close", "high", "low", "volume"]
     )
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
@@ -137,11 +137,11 @@ def get_price(
 
 
 if __name__ == "__main__":
-    df = get_price("sh000001", frequency="1d", count=10)  # 支持'1d'日, '1w'周, '1M'月
+    df = get_price("sh601818", frequency="1d", count=10)  # 支持'1d'日, '1w'周, '1M'月
     print("上证指数日线行情\n", df)
 
     df = get_price(
-        "000001.XSHG", frequency="15m", count=10
+        "sh601818", frequency="1m", count=10
     )  # 支持'1m','5m','15m','30m','60m'
     print("上证指数分钟线\n", df)
 
