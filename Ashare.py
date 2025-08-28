@@ -22,11 +22,19 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     ms = "qfq" + unit
     stk = st["data"][code]
     buf = stk[ms] if ms in stk else stk[unit]  # 指数返回不是qfqday,是day
-    dividend_info = [item for item in buf if isinstance(item, (list, tuple)) and any(isinstance(x, dict) for x in item)]
-    if dividend_info:
-        print(f"Info: 发现 {len(dividend_info)} 条分红记录")
-    cleaned_buf = [item for item in buf if
-                   isinstance(item, (list, tuple)) and len(item) >= 6 and not any(isinstance(x, dict) for x in item)]
+    cleaned_buf = []
+    for item in buf:
+        if isinstance(item, (list, tuple)) and len(item) >= 6:
+            # 只取前6个元素，不管后面是什么
+            cleaned_item = item[:6]
+            cleaned_buf.append(cleaned_item)
+        # 可以选择记录包含额外信息的行
+        if (
+            isinstance(item, (list, tuple))
+            and len(item) > 6
+            and any(isinstance(x, dict) for x in item[6:])
+        ):
+            print(f"Info: 发现带附加信息的记录: {item[0]}")
     data = {
         "time": [item[0] for item in cleaned_buf],
         "open": [item[1] for item in cleaned_buf],
@@ -36,7 +44,9 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
         "volume": [item[5] for item in cleaned_buf],
     }
     df = pd.DataFrame(data)
-    df[["open", "close", "high", "low", "volume"]] = df[["open", "close", "high", "low", "volume"]].astype(float)
+    df[["open", "close", "high", "low", "volume"]] = df[
+        ["open", "close", "high", "low", "volume"]
+    ].astype(float)
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
     df.index.name = ""  # 处理索引
