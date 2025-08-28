@@ -28,6 +28,7 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
     df.index.name = ""  # 处理索引
+    print("当前线路为：腾讯日线\n")
     return df
 
 
@@ -54,6 +55,7 @@ def get_price_min_tx(code, end_date=None, count=10, frequency="1d"):  # 分钟�
     df.set_index(["time"], inplace=True)
     df.index.name = ""  # 处理索引
     df["close"][-1] = float(st["data"][code]["qt"][code][3])  # 最新基金数据是3位的
+    print("当前线路为：腾讯分钟线\n")
     return df
 
 
@@ -91,6 +93,7 @@ def get_price_sina(code, end_date="", count=10, frequency="60m"):  # 新浪全�
     df.index.name = ""  # 处理索引
     if (end_date != "") & (frequency in ["240m", "1200m", "7200m"]):
         return df[df.index <= end_date][-mcount:]  # 日线带结束时间先返回
+    print("当前线路为：新浪\n")
     return df
 
 
@@ -104,11 +107,11 @@ def get_price(
 
     if frequency in ["1d", "1w", "1M"]:  # 1d日线  1w周线  1M月线
         try:
-            return get_price_sina(
+            return get_price_day_tx(
                 xcode, end_date=end_date, count=count, frequency=frequency
             )  # 主力
         except:
-            return get_price_day_tx(
+            return get_price_sina(
                 xcode, end_date=end_date, count=count, frequency=frequency
             )  # 备用
 
@@ -124,11 +127,11 @@ def get_price(
                 xcode, end_date=end_date, count=count, frequency=frequency
             )
         try:
-            return get_price_sina(
+            return get_price_min_tx(
                 xcode, end_date=end_date, count=count, frequency=frequency
             )  # 主力
         except:
-            return get_price_min_tx(
+            return get_price_sina(
                 xcode, end_date=end_date, count=count, frequency=frequency
             )  # 备用
 
