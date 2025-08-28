@@ -26,24 +26,19 @@ Based on the project files, there isn't a single, clearly defined main entry poi
     # Or, based on pyproject.toml
     pip install .
     ```
-2.  **Run Examples**: You can execute the example scripts provided in the `Ashare` directory to see the libraries in action.
+2.  **Run Examples**: You can execute the example scripts provided in the project root to see the libraries in action.
     ```bash
     # Navigate to the project root
-    cd D:\Users\29857\Documents\Github\stock_data_collector
-    # Run Demo1.py to see basic data fetching
-    python Ashare\Demo1.py
-    # Run Demo2.py to see data fetching + plotting with MyTT indicators
-    python Ashare\Demo2.py
+    cd C:\Users\29857\Documents\Github\ApexSignal
+    # Run get_stock_data.py to see basic data fetching and indicator calculation
+    python get_stock_data.py
     ```
 3.  **Use in your code**: Import the libraries (`from Ashare import *`, `from MyTT import *`) into your Python scripts and use the `get_price()` function and technical indicator functions as demonstrated in the demo files.
 
 ## Development Conventions & Practices
 
 - **Dependencies**: Dependencies are managed using `pyproject.toml` and `requirements.txt`. `uv` is likely the preferred package manager.
-- **Libraries**: The core functionality resides in `Ashare/Ashare.py` and `MyTT/MyTT.py`. These are standalone modules.
-- **Examples**: Usage examples are provided in `Ashare/Demo1.py` and `Ashare/Demo2.py`.
+- **Libraries**: The core functionality resides in `Ashare.py` and `MyTT.py`. These are standalone modules.
+- **Examples**: Usage examples are provided in `get_stock_data.py`.
 - **Data Handling**: The project heavily relies on `pandas` DataFrames for data manipulation and `numpy` for numerical computations within `MyTT`.
 - **API Usage**: The `Ashare` library fetches data via HTTP requests to public financial APIs (Sina, Tencent).
-
-## Qwen Added Memories
-- 用户偏好：代码注释和终端打印内容尽量使用中文；功能实现追求代码简洁，优先保证核心功能可用，不处理异常抛出，方便用户理解代码逻辑。
