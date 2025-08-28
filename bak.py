@@ -1,4 +1,3 @@
-
 def get_price_day_tx_fixed(code, end_date="", count=10, frequency="1d"):
     """修复版的腾讯日线获取函数"""
     unit = "week" if frequency in "1w" else "month" if frequency in "1M" else "day"
@@ -37,4 +36,3 @@ def get_price_day_tx_fixed(code, end_date="", count=10, frequency="1d"):
     df.set_index(["time"], inplace=True)
     df.index.name = ""
     return df
-
