@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-    --------------Ashare 股票行情数据双核心版修复版( https://github.com/ShiroRikka/ApexSignal )
-import json, requests, datetime
+import datetime
+import json
+
 import pandas as pd  #
+import requests
 
 
 # 腾讯日线
