@@ -1,10 +1,8 @@
 # -*- coding:utf-8 -*-
-import json
 import time
-import requests
-import pandas as pd
-from MyTT import KDJ, MACD, RSI
+
 from Ashare import get_price
+from MyTT import KDJ, MACD, RSI
 
 # 1. 获取光大银行sh601818的前复权行情数据
 count = 120 + 1  # 包含今天

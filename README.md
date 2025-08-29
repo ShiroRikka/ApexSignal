@@ -35,9 +35,7 @@ ApexSignal 是一个用 Python 编写的轻量级工具集，旨在方便地获�
         ```bash
         uv sync
         ```
-    *   使用 `pip`:
-        ```bash
-        pip install -r requirements.txt
+
         # 或者基于 pyproject.toml
         pip install .
         ```

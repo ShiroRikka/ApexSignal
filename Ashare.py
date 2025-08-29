@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-    --------------Ashare 股票行情数据双核心版修复版( https://github.com/ShiroRikka/ApexSignal )
-import json, requests, datetime
+import datetime
+import json
+
 import pandas as pd  #
+import requests
 
 
 # 腾讯日线
@@ -49,7 +52,6 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     ].astype(float)
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
-    df.index.name = ""  # 处理索引
     print("当前线路为：腾讯日线\n")
     return df
 
