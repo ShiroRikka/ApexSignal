@@ -20,9 +20,6 @@ Based on the project files, there isn't a single, clearly defined main entry poi
     ```bash
     # Using uv (recommended if you have it)
     uv sync
-
-    # Using pip
-    pip install -r requirements.txt
     # Or, based on pyproject.toml
     pip install .
     ```
