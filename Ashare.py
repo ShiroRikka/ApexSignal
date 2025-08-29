@@ -49,7 +49,6 @@ def get_price_day_tx(code, end_date="", count=10, frequency="1d"):  # 日线获�
     ].astype(float)
     df.time = pd.to_datetime(df.time)
     df.set_index(["time"], inplace=True)
-    df.index.name = ""  # 处理索引
     print("当前线路为：腾讯日线\n")
     return df
 
