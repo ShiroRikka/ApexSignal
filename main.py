@@ -1,8 +1,29 @@
 # main.py
 from data_updater import update_stock_data, load_config
-from MACDChecker import MacdChecker  # 建议改为 MacdChecker
-from RSIChecker import RsiChecker  # 建议改为 RsiChecker
+from macd_checker import MacdChecker  # 建议改为 MacdChecker
+from rsi_checker import RsiChecker  # 建议改为 RsiChecker
 import os
+import logging
+
+def setup_logger(config):
+    level = getattr(logging, config.get("output", {}).get("log_level", "INFO").upper())
+    logger = logging.getLogger("ApexSignal")
+    logger.setLevel(level)
+
+    if not logger.handlers:
+        fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        sh = logging.StreamHandler()
+        sh.setFormatter(fmt)
+        logger.addHandler(sh)
+
+        # 可选：添加文件日志
+        log_dir = config.get("output", {}).get("log_dir", "./logs")
+        os.makedirs(log_dir, exist_ok=True)
+        fh = logging.FileHandler(f"{log_dir}/apexsignal.log", encoding='utf-8')
+        fh.setFormatter(fmt)
+        logger.addHandler(fh)
+
+    return logger
 
 
 def get_stock_list(config):
@@ -25,6 +46,7 @@ def get_stock_list(config):
 
 def main():
     config = load_config()
+    logger = setup_logger(config)
     stock_list = get_stock_list(config)
 
     if not stock_list:
