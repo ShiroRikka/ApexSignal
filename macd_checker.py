@@ -307,10 +307,14 @@ class MACDChecker:
 
 
 if __name__ == "__main__":
-    checker = MACDChecker("sh601328")
-    result = checker.run()
+    checker = MACDChecker("sh601288")
 
-    # 格式化输出
-    print("\n" + "📊 最终信号报告 ".center(50, "═"))
-    for k, v in result.items():
-        print(f"  {k:<18} : {v}")
+    print("🧪 测试1：宽松背离检测（window=20, peak_window=4）")
+    result1 = checker.run(divergence_window=20, peak_window=4)
+
+    print("\n\n🧪 测试2：严格背离检测（window=8, peak_window=2）")
+    result2 = checker.run(divergence_window=8, peak_window=2)
+
+    print("\n\n🧪 测试3：默认参数")
+    result3 = checker.run()
+

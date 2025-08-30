@@ -5,3 +5,4 @@ __pycache__
 .qwen
 # Database files
 *.db
+*_qfq_data_with_indicators.csv

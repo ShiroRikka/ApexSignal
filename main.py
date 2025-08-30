@@ -1,7 +1,7 @@
 from data_updater import update_stock_data
 from macd_checker import MACDChecker
 
-stock_list = ["sh601328", "sh601818", "sz000001"]
+stock_list = ["sh601328", "sh601818", "sh601288"]
 
 results = []
 for code in stock_list:
