@@ -85,18 +85,44 @@ class SimpleMACD:
         macd_lows = argrelextrema(self.df['macd_line'].values, np.less, order=window)[0]
         
         print("顶背离（价格新高，MACD不新高）:")
-        for i in range(2, min(len(price_highs), len(macd_highs))):
-            if (self.df['close'].iloc[price_highs[i]] > self.df['close'].iloc[price_highs[i-1]] and
-                self.df['macd_line'].iloc[macd_highs[i]] < self.df['macd_line'].iloc[macd_highs[i-1]]):
-                date = self.df.index[price_highs[i]]
-                print(f"  ⚠️  {date.date()}: 注意可能的顶部反转")
+        for i in range(2, len(price_highs)):
+            price_date = self.df.index[price_highs[i]]
+            price_idx = price_highs[i]
+            
+            # 找到最接近但早于当前价格高点的MACD高点
+            relevant_macd_highs = [m for m in macd_highs if m < price_idx]
+            if len(relevant_macd_highs) >= 2:
+                # 取最近的两个MACD高点
+                macd_highs_sorted = sorted(relevant_macd_highs)
+                current_macd_idx = macd_highs_sorted[-1]
+                prev_macd_idx = macd_highs_sorted[-2]
+                
+                # 检查顶背离：价格创新高但MACD没有
+                if (self.df['close'].iloc[price_idx] > self.df['close'].iloc[price_highs[i-1]] and
+                    self.df['macd_line'].iloc[current_macd_idx] < self.df['macd_line'].iloc[prev_macd_idx]):
+                    print(f"  ⚠️  {price_date.date()}: 注意可能的顶部反转")
+                    print(f"      价格: {self.df['close'].iloc[price_idx]:.3f} > {self.df['close'].iloc[price_highs[i-1]]:.3f}")
+                    print(f"      MACD: {self.df['macd_line'].iloc[current_macd_idx]:.4f} < {self.df['macd_line'].iloc[prev_macd_idx]:.4f}")
         
         print("\n底背离（价格新低，MACD不新低）:")
-        for i in range(2, min(len(price_lows), len(macd_lows))):
-            if (self.df['close'].iloc[price_lows[i]] < self.df['close'].iloc[price_lows[i-1]] and
-                self.df['macd_line'].iloc[macd_lows[i]] > self.df['macd_line'].iloc[macd_lows[i-1]]):
-                date = self.df.index[price_lows[i]]
-                print(f"  ✅ {date.date()}: 注意可能的底部反弹")
+        for i in range(2, len(price_lows)):
+            price_date = self.df.index[price_lows[i]]
+            price_idx = price_lows[i]
+            
+            # 找到最接近但早于当前价格低点的MACD低点
+            relevant_macd_lows = [m for m in macd_lows if m < price_idx]
+            if len(relevant_macd_lows) >= 2:
+                # 取最近的两个MACD低点
+                macd_lows_sorted = sorted(relevant_macd_lows)
+                current_macd_idx = macd_lows_sorted[-1]
+                prev_macd_idx = macd_lows_sorted[-2]
+                
+                # 检查底背离：价格创新低但MACD没有
+                if (self.df['close'].iloc[price_idx] < self.df['close'].iloc[price_lows[i-1]] and
+                    self.df['macd_line'].iloc[current_macd_idx] > self.df['macd_line'].iloc[prev_macd_idx]):
+                    print(f"  ✅ {price_date.date()}: 注意可能的底部反弹")
+                    print(f"      价格: {self.df['close'].iloc[price_idx]:.3f} < {self.df['close'].iloc[price_lows[i-1]]:.3f}")
+                    print(f"      MACD: {self.df['macd_line'].iloc[current_macd_idx]:.4f} > {self.df['macd_line'].iloc[prev_macd_idx]:.4f}")
     
     def histogram_momentum(self):
         """用法4：柱状图动能 - 观察涨跌力度"""
