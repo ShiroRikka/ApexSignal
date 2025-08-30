@@ -1,7 +1,8 @@
 # main.py
 from data_updater import update_stock_data, load_config
-from macd_checker import MacdChecker  # 建议改为 MacdChecker
-from rsi_checker import RsiChecker  # 建议改为 RsiChecker
+from macd_checker import MacdChecker
+from rsi_checker import RsiChecker
+from kdj_checker import KdjChecker
 import os
 import logging
 
@@ -81,22 +82,38 @@ def main():
             print(f"❌ RSI 分析失败: {e}")
             rsi_result = {"score": 0, "combined_signal": "error"}
 
-        # === 融合信号（可选）===
-        combined_score = macd_result.get("score", 0) + rsi_result.get("score", 0)
-        final_signal = "strong_buy" if combined_score >= 6 else \
-            "buy" if combined_score >= 2 else \
-                "hold" if combined_score > -2 else \
-                    "sell"
+        try:
+            kdj_checker = KdjChecker(code, config=config)
+            kdj_result = kdj_checker.run()
+            kdj_checker.plot()
+        except Exception as e:
+            print(f"❌ KDJ 分析失败: {e}")
+            kdj_result = {"score": 0, "combined_signal": "error"}
+
+        # === 三因子融合信号 ===
+        combined_score = (
+                macd_result.get("score", 0) +
+                rsi_result.get("score", 0) +
+                kdj_result.get("score", 0)
+        )
+
+        final_signal = "strong_buy" if combined_score >= 8 else \
+            "buy" if combined_score >= 4 else \
+                "hold" if combined_score >= -2 else \
+                    "sell" if combined_score >= -6 else \
+                        "strong_sell"
 
         # 保存结果
         results.append({
             "stock_code": code,
             "macd_score": macd_result.get("score", 0),
             "rsi_score": rsi_result.get("score", 0),
+            "kdj_score": kdj_result.get("score", 0),
             "combined_score": combined_score,
             "final_signal": final_signal,
             "macd_advice": macd_result.get("advice", ""),
-            "rsi_advice": rsi_result.get("advice", "")
+            "rsi_advice": rsi_result.get("advice", ""),
+            "kdj_advice": kdj_result.get("advice", "")
         })
 
     # 保存结果
