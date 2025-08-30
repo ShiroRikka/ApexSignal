@@ -1,5 +1,5 @@
 from data_updater import update_stock_data, load_config # 导入 load_config
-from macd_checker import MACDChecker
+from MACDChecker import MACDChecker
 import os
 
 def get_stock_list(config):
