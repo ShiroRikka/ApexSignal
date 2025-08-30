@@ -170,16 +170,10 @@ class SimpleMACD:
         # 收敛：MACD线与信号线接近
         squeeze = abs(self.df['macd_line'] - self.df['signal_line']) < threshold
         
-        # 收敛后突破
-        breakout_up = (
-            squeeze.shift(1) & 
-            (self.df['histogram'] > threshold * 2)
-        )
-        
-        breakout_down = (
-            squeeze.shift(1) & 
-            (self.df['histogram'] < -threshold * 2)
-        )
+        # 收敛后突破：只检测收敛结束的第一根K线
+        squeeze_end = squeeze.shift(1) & ~squeeze  # 前一天是收敛，今天不是收敛 = 收敛刚结束
+        breakout_up = squeeze_end & (self.df['histogram'] > threshold * 2)
+        breakout_down = squeeze_end & (self.df['histogram'] < -threshold * 2)
         
         print("收敛状态（准备突破）:")
         squeeze_dates = self.df[squeeze].tail(5).index
