@@ -1,12 +1,65 @@
 # ApexSignal 配置文件
 
-# 数据更新相关
-data_updater:
-  count: 365              # 默认获取365天的数据
-  frequency: "1d"         # 数据周期：日线
-  force_update: false     # 是否强制更新（忽略缓存）
+# ==================== 数据源配置 ====================
+data_source:
+  # 可选: 'akshare', 'baostock', 'tushare', 'ashare'
+  provider: "ashare"
+  # 如果使用 tushare, 需要在此配置 token
+  # tushare_token: "your_tushare_token_here"
 
-# MACD 检查相关
-macd_checker:
-  divergence_window: 12   # 背离检测窗口（天数）
-  peak_window: 3          # 极值点检测窗口
+# ==================== 数据更新相关 ====================
+data_updater:
+  # 默认获取多少天的数据
+  default_count: 365
+  # 默认数据周期：日线 '1d', 周线 '1w', 月线 '1M'
+  default_frequency: "1d"
+  # 是否强制更新（忽略缓存）
+  force_update: false
+  # 数据缓存目录 (相对于项目根目录)
+  cache_dir: "./data_cache"
+  # 更新时间窗口 (例如，只在交易日的特定时间更新)
+  # update_time_window: ["09:00", "15:30"] # 示例，需要代码实现
+
+# ==================== 技术指标参数 ====================
+indicators:
+  macd:
+    fast_period: 12
+    slow_period: 26
+    signal_period: 9
+  kdj:
+    n: 9
+    m1: 3
+    m2: 3
+  rsi:
+    period: 14
+
+# ==================== 信号检查相关 (MACD) ====================
+signal_checker:
+  macd:
+    # 背离检测窗口（天数）
+    divergence_window: 12
+    # 极值点检测窗口
+    peak_window: 3
+    # 其他MACD检查器可能的参数...
+
+# ==================== 输出与可视化 ====================
+output:
+  # 日志级别: 'DEBUG', 'INFO', 'WARNING', 'ERROR'
+  log_level: "INFO"
+  # 是否在分析后显示图表
+  show_plot: true
+  # 图表保存路径 (如果为空则不保存)
+  plot_save_dir: "./plots"
+  # CSV 输出路径
+  csv_output_dir: "./results"
+
+# ==================== 股票池 ====================
+# 可以直接在配置文件中定义，也可以通过外部文件或数据库获取
+stock_pool:
+  # 静态股票列表
+  static_list:
+    - "sh601328"
+    - "sh601818"
+    - "sh601288"
+  # 从文件读取股票列表的路径 (如果配置了此项，将优先使用文件)
+  # file_path: "./stock_list.txt"

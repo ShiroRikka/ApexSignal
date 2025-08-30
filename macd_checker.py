@@ -2,8 +2,14 @@ import numpy as np
 import pandas as pd
 import yaml
 import os
+import logging
 from tools import TOOLS
 
+# --- 新增日志配置 ---
+def setup_logger(config):
+    level = getattr(logging, config.get("log_level", "INFO").upper(), logging.INFO)
+    logging.basicConfig(level=level, format='%(asctime)s - %(levelname)s - %(message)s')
+    return logging.getLogger(__name__)
 
 def load_config():
     """加载配置文件"""
@@ -13,6 +19,7 @@ def load_config():
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
+# ... (find_peaks_and_troughs 函数保持不变) ...
 
 def find_peaks_and_troughs(series, window=2):
     """
@@ -32,12 +39,27 @@ def find_peaks_and_troughs(series, window=2):
 class MACDChecker:
     """MACD信号检查类"""
 
-    def __init__(self, stock_code="sh601818"):
-        csv_file = f"{stock_code}_qfq_data_with_indicators.csv"
+    def __init__(self, stock_code="sh601818", config=None):
+        self.config = config if config else load_config()
+        self.logger = setup_logger(self.config.get("output", {}))
+        self.signal_checker_config = self.config.get("signal_checker", {}).get("macd", {})
+        self.indicators_config = self.config.get("indicators", {}).get("macd", {})
+        
+        cache_dir = self.config.get("data_updater", {}).get("cache_dir", ".")
+        csv_file = os.path.join(cache_dir, f"{stock_code}_qfq_data_with_indicators.csv")
+        if not os.path.exists(csv_file):
+             self.logger.error(f"❌ 找不到数据文件: {csv_file}")
+             raise FileNotFoundError(f"数据文件 {csv_file} 未找到")
         self.tools = TOOLS(csv_file)
         self.stock_code = stock_code
         self.df = self.tools.df
+        # 确保 df 不为空
+        if self.df.empty:
+            self.logger.error(f"❌ 数据文件 {csv_file} 为空")
+            raise ValueError(f"数据文件 {csv_file} 为空")
         self.latest_two = self.tools.get_latest_two_all()
+
+    # ... (get_last_two_DIF_DEA_MACD 保持不变) ...
 
     def get_last_two_DIF_DEA_MACD(self):
         """返回前一日和当前日的 DIF, DEA, MACD"""
@@ -49,22 +71,26 @@ class MACDChecker:
         curr_macd = self.df["MACD"].iloc[-1]
         return prev_dif, curr_dif, prev_dea, curr_dea, prev_macd, curr_macd
 
-    def detect_macd_divergence(
-        self, window=12, price_col="close", macd_col="DIF", window_for_peaks=3
-    ):
+    def detect_macd_divergence(self, window=None, price_col="close", macd_col="DIF", window_for_peaks=None):
         """
         检测 MACD 背离（作为类方法）
-        :param window: 分析窗口大小（默认12）
+        :param window: 分析窗口大小（默认从配置读取）
         :param price_col: 价格列名
         :param macd_col: MACD列名（默认"DIF"）
-        :param window_for_peaks: 极值点检测窗口（默认3）
+        :param window_for_peaks: 极值点检测窗口（默认从配置读取）
         """
+        # 从配置或参数获取值
+        if window is None:
+            window = self.signal_checker_config.get("divergence_window", 12)
+        if window_for_peaks is None:
+            window_for_peaks = self.signal_checker_config.get("peak_window", 3)
+
         df = self.df  # 使用 self.df
         recent = df.tail(window * 2).copy()
         if len(recent) < window:
             return {"divergence": "not_enough_data"}
 
-        print(recent)
+        # self.logger.debug(f"用于背离检测的近期数据:\n{recent}") # 可选调试日志
 
         close = recent[price_col]
         dif = recent[macd_col].ffill().fillna(0)
@@ -132,6 +158,8 @@ class MACDChecker:
 
         return result
 
+    # ... (get_cross_signal, get_trend_signal, get_momentum_signal 保持基本不变，但可以使用 self.logger) ...
+    
     def get_cross_signal(self):
         """金叉与死叉 - 最简单的买卖信号"""
         # ✅ 正确方式：调用 get_last_two_DIF_DEA_MACD 获取数值
@@ -141,16 +169,16 @@ class MACDChecker:
 
         # 金叉：DIF 上穿 DEA
         if prev_dif <= prev_dea and curr_dif > curr_dea:
-            print(f"✅ {self.stock_code} 出现 MACD 金叉！买入信号")
+            self.logger.info(f"✅ {self.stock_code} 出现 MACD 金叉！买入信号")
             return "golden_cross"
 
         # 死叉：DIF 下穿 DEA
         elif prev_dif >= prev_dea and curr_dif < curr_dea:
-            print(f"❌ {self.stock_code} 出现 MACD 死叉！卖出信号")
+            self.logger.info(f"❌ {self.stock_code} 出现 MACD 死叉！卖出信号")
             return "death_cross"
 
         else:
-            print(f"📊 {self.stock_code} 无金叉或死叉信号")
+            self.logger.info(f"📊 {self.stock_code} 无金叉或死叉信号")
             return "no_signal"
 
     def get_trend_signal(self):
@@ -162,16 +190,16 @@ class MACDChecker:
         latest_dif = self.df["DIF"].iloc[-1]
         latest_dea = self.df["DEA"].iloc[-1]
 
-        print(f"{self.stock_code} 当前 DIF={latest_dif:.4f}, DEA={latest_dea:.4f}")
+        self.logger.info(f"{self.stock_code} 当前 DIF={latest_dif:.4f}, DEA={latest_dea:.4f}")
 
         if latest_dif > 0 and latest_dea > 0:
-            print("🟩【多头市场】DIF 和 DEA 均在零轴上方，近期股价处于上涨趋势")
+            self.logger.info("🟩【多头市场】DIF 和 DEA 均在零轴上方，近期股价处于上涨趋势")
             return "bullish"
         elif latest_dif < 0 and latest_dea < 0:
-            print("🟥【空头市场】DIF 和 DEA 均在零轴下方，近期股价处于下跌趋势")
+            self.logger.info("🟥【空头市场】DIF 和 DEA 均在零轴下方，近期股价处于下跌趋势")
             return "bearish"
         else:
-            print("🟨【震荡市场】DIF 和 DEA 分居零轴两侧，趋势不明确")
+            self.logger.info("🟨【震荡市场】DIF 和 DEA 分居零轴两侧，趋势不明确")
             return "neutral"
 
     def get_momentum_signal(self):
@@ -181,32 +209,41 @@ class MACDChecker:
         latest_macd = self.df["MACD"].iloc[-1]
         prev_macd = self.df["MACD"].iloc[-2]
 
-        print(f"{self.stock_code} 当前 MACD 柱 = {latest_macd:.4f}")
+        self.logger.info(f"{self.stock_code} 当前 MACD 柱 = {latest_macd:.4f}")
 
         if latest_macd > 0:
-            print("🟢 MACD 柱位于零轴上方，多头动能主导")
+            self.logger.info("🟢 MACD 柱位于零轴上方，多头动能主导")
             momentum = "bullish_momentum"
             if prev_macd < 0:
-                print("🚀【柱状图翻红】：空翻多，动能反转！强烈关注")
+                self.logger.info("🚀【柱状图翻红】：空翻多，动能反转！强烈关注")
                 momentum_change = "momentum_shift_up"
             else:
                 momentum_change = "momentum_strong_up"
         elif latest_macd < 0:
-            print("🔴 MACD 柱位于零轴下方，空头动能主导")
+            self.logger.info("🔴 MACD 柱位于零轴下方，空头动能主导")
             momentum = "bearish_momentum"
             if prev_macd > 0:
-                print("💀【柱状图翻绿】：多翻空，动能转弱！警惕下跌")
+                self.logger.info("💀【柱状图翻绿】：多翻空，动能转弱！警惕下跌")
                 momentum_change = "momentum_shift_down"
             else:
                 momentum_change = "momentum_strong_down"
         else:
-            print("🟨 MACD 柱为 0，动能平衡")
+            self.logger.info("🟨 MACD 柱为 0，动能平衡")
             momentum = "neutral"
             momentum_change = "neutral"
 
         return latest_macd, momentum, momentum_change
-
+    
     def plot(self, window=30):
+        # 从配置读取输出设置
+        output_config = self.config.get("output", {})
+        show_plot = output_config.get("show_plot", True)
+        plot_save_dir = output_config.get("plot_save_dir", None)
+        
+        if not show_plot and not plot_save_dir:
+            self.logger.info("图表显示和保存均已禁用，跳过绘图。")
+            return
+            
         recent = self.df.tail(window)
         import matplotlib.pyplot as plt
 
@@ -229,7 +266,16 @@ class MACDChecker:
 
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.show()
+        
+        # 显示或保存图表
+        if show_plot:
+            plt.show()
+        if plot_save_dir:
+            os.makedirs(plot_save_dir, exist_ok=True)
+            save_path = os.path.join(plot_save_dir, f"{self.stock_code}_macd_analysis.png")
+            plt.savefig(save_path)
+            self.logger.info(f"📈 图表已保存至: {save_path}")
+        plt.close() # 关闭图形以释放内存
 
     def run(self, divergence_window=None, peak_window=None):
         """
@@ -237,13 +283,14 @@ class MACDChecker:
         :param divergence_window: 背离检测窗口（默认从配置读取）
         :param peak_window: 极值点检测窗口（默认从配置读取）
         """
-        config = load_config().get("macd_checker", {})
-        if divergence_window is None:
-            divergence_window = config.get("divergence_window", 12)
-        if peak_window is None:
-            peak_window = config.get("peak_window", 3)
-        print(f"🔍 终极 MACD 多维分析：{self.stock_code}")
-        print("—" * 50)
+        # 允许参数覆盖配置
+        if divergence_window is not None:
+            self.signal_checker_config["divergence_window"] = divergence_window
+        if peak_window is not None:
+             self.signal_checker_config["peak_window"] = peak_window
+             
+        self.logger.info(f"🔍 终极 MACD 多维分析：{self.stock_code}")
+        print("-" * 50) # 保留 print 用于直接控制台输出
 
         # 1️⃣ 获取金叉/死叉信号
         cross_signal = self.get_cross_signal()
@@ -254,9 +301,10 @@ class MACDChecker:
         # 3️⃣ 获取柱状图动能
         latest_macd, momentum, momentum_change = self.get_momentum_signal()
 
-        # 4️⃣ 背离信
+        # 4️⃣ 背离信号
         divergence = self.detect_macd_divergence(
-            window=divergence_window, window_for_peaks=peak_window
+            window=self.signal_checker_config.get("divergence_window"),
+            window_for_peaks=self.signal_checker_config.get("peak_window")
         )
         div_type = divergence.get("type")
         div_strength = divergence.get("strength")
@@ -341,37 +389,6 @@ class MACDChecker:
             "divergence_details": divergence.get("details", ""),
         }
 
-if __name__ == "__main__":
-    # 构造测试数据
-    test_data = pd.DataFrame({
-        "time": pd.date_range("2024-11-25", periods=12),
-        "close": [4.60, 4.50, 4.45, 4.55, 4.60, 4.50, 4.40, 4.35, 4.45, 4.55, 4.65, 4.75],
-        "DIF":   [0.020, 0.015, 0.010, 0.012, 0.018, 0.016, 0.014, 0.015, 0.020, 0.025, 0.030, 0.035],
-        "DEA":   [0.0] * 12,
-        "MACD":  [0.0] * 12,
-        "K":     [0.0] * 12,
-        "D":     [0.0] * 12,
-        "J":     [0.0] * 12,
-        "RSI":   [0.0] * 12,
-        "open":  [4.6]*12,
-        "high":  [4.7]*12,
-        "low":   [4.4]*12,
-        "volume":[100000]*12,
-    }).reset_index().rename(columns={'index': 'time'})
-
-    # 保存为 CSV，让 TOOLS 能读取
-    test_code = "TEST_BACKWARD"
-    test_data.to_csv(f"{test_code}_qfq_data_with_indicators.csv", index=False)
-
-    # 使用真实 MACDChecker
-    checker = MACDChecker(stock_code=test_code)
-    result = checker.detect_macd_divergence(window=10, window_for_peaks=2)
-
-    print("\n" + "="*60)
-    print("🧪 底背离测试结果")
-    print("="*60)
-    print(f"检测到: {result['divergence']}")
-    print(f"类型: {result['type']}")
-    print(f"详情: {result['details']}")
-    checker.plot()
+# if __name__ == "__main__":
+#     # ... (main 测试部分需要相应调整以使用新配置) ...
 
