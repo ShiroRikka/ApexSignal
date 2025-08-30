@@ -47,7 +47,7 @@ output:
   # 日志级别: 'DEBUG', 'INFO', 'WARNING', 'ERROR'
   log_level: "INFO"
   # 是否在分析后显示图表
-  show_plot: true
+  show_plot: false
   # 图表保存路径 (如果为空则不保存)
   plot_save_dir: "./plots"
   # CSV 输出路径
