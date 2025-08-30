@@ -56,6 +56,12 @@ signal_checker:
     # 极值点检测窗口
     peak_window: 3
 
+  kdj:
+    overbought: 80
+    oversold: 20
+    divergence_window: 12
+    peak_window: 3
+
 
 # ==================== 输出与可视化 ====================
 output:
@@ -76,5 +82,6 @@ stock_pool:
     - "sh601328"
     - "sh601818"
     - "sh601288"
+    - "sh601398"
   # 从文件读取股票列表的路径 (如果配置了此项，将优先使用文件)
   # file_path: "./stock_list.txt"
