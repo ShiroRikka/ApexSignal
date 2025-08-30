@@ -1,11 +1,13 @@
-# main.py
-import os
-import subprocess
+from data_updater import update_stock_data
+from macd_checker import MACDChecker
 
-# 先更新数据
-print("🔄 正在更新数据...")
-subprocess.run(["python", "data_fetcher.py"])
+stock_list = ["sh601328", "sh601818", "sz000001"]
 
-# 再分析信号
-print("🔍 正在分析信号...")
-subprocess.run(["python", "macd_checker.py"])
+results = []
+for code in stock_list:
+    print(f"\n{'='*60}")
+    df = update_stock_data(code)
+    if df is not None:
+        checker = MACDChecker(code)
+        result = checker.run()
+        results.append(result)
