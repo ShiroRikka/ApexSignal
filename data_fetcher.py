@@ -9,7 +9,7 @@ from MyTT import KDJ, MACD, RSI
 # === 配置参数 ===
 count = 200  # 取200天数据
 frequency = "1d"
-code = "sh601818"
+code = "sh601328"
 filename = f"{code}_qfq_data_with_indicators.csv"
 
 # 获取今天的日期

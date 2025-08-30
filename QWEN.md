@@ -27,8 +27,8 @@ Based on the project files, there isn't a single, clearly defined main entry poi
     ```bash
     # Navigate to the project root
     cd C:\Users\29857\Documents\Github\ApexSignal
-    # Run get_stock_data.py to see basic data fetching and indicator calculation
-    python get_stock_data.py
+    # Run data_fetcher.py to see basic data fetching and indicator calculation
+    python data_fetcher.py
     ```
 3.  **Use in your code**: Import the libraries (`from Ashare import *`, `from MyTT import *`) into your Python scripts and use the `get_price()` function and technical indicator functions as demonstrated in the demo files.
 

@@ -1,4 +1,34 @@
+import numpy as np
+
 from tools import TOOLS
+
+
+def find_peaks_and_troughs(series, window=3):
+    """
+    找出序列中的局部高点（峰值）和低点（谷值）
+    返回：两个布尔数组，peak_mask 和 trough_mask
+    """
+    # 创建副本避免警告
+    s = series.copy()
+    s = s.ffill().bfill()  # 修复警告
+    values = s.values  # 转为 numpy 数组，按位置访问
+    peak_mask = np.zeros(len(values), dtype=bool)
+    trough_mask = np.zeros(len(values), dtype=bool)
+
+    for i in range(window, len(values) - window):
+        # 检查是否是局部最大值
+        if all(values[i] >= values[i - j] for j in range(1, window + 1)) and all(
+            values[i] >= values[i + j] for j in range(1, window + 1)
+        ):
+            peak_mask[i] = True
+
+        # 检查是否是局部最小值
+        if all(values[i] <= values[i - j] for j in range(1, window + 1)) and all(
+            values[i] <= values[i + j] for j in range(1, window + 1)
+        ):
+            trough_mask[i] = True
+
+    return peak_mask, trough_mask
 
 
 class MACDChecker:
@@ -11,7 +41,6 @@ class MACDChecker:
         self.df = self.tools.df
         self.latest_two = self.tools.get_latest_two_all()
 
-
     def get_last_two_DIF_DEA_MACD(self):
         """返回前一日和当前日的 DIF, DEA, MACD"""
         prev_dif = self.df["DIF"].iloc[-2]
@@ -21,6 +50,83 @@ class MACDChecker:
         prev_macd = self.df["MACD"].iloc[-2]
         curr_macd = self.df["MACD"].iloc[-1]
         return prev_dif, curr_dif, prev_dea, curr_dea, prev_macd, curr_macd
+
+    def detect_macd_divergence(
+        self, window=12, price_col="close", macd_col="DIF", window_for_peaks=3
+    ):
+        """
+        检测 MACD 背离（作为类方法）
+        """
+        df = self.df  # 使用 self.df
+        recent = df.tail(window * 2).copy()
+        if len(recent) < window:
+            return {"divergence": "not_enough_data"}
+
+        close = recent[price_col]
+        dif = recent[macd_col].ffill().fillna(0)
+
+        # 找极值点
+        price_peaks_mask, price_troughs_mask = find_peaks_and_troughs(
+            close, window=window_for_peaks
+        )
+        dif_peaks_mask, dif_troughs_mask = find_peaks_and_troughs(
+            dif, window=window_for_peaks
+        )
+
+        price_peaks = close[price_peaks_mask]
+        price_troughs = close[price_troughs_mask]
+        dif_peaks = dif[dif_peaks_mask]
+        dif_troughs = dif[dif_troughs_mask]
+
+        result = {
+            "divergence": "no_divergence",
+            "type": None,
+            "strength": None,
+            "details": "",
+        }
+
+        # 🔺 顶背离
+        if len(price_peaks) >= 2 and len(dif_peaks) >= 2:
+            latest_price_peak = price_peaks.iloc[-1]
+            prev_price_peak = price_peaks.iloc[-2]
+            latest_dif_peak = dif_peaks.iloc[-1]
+            prev_dif_peak = dif_peaks.iloc[-2]
+
+            if latest_price_peak > prev_price_peak and latest_dif_peak < prev_dif_peak:
+                strength = "strong" if latest_dif_peak < 0 else "moderate"
+                result.update(
+                    {
+                        "divergence": "bearish_divergence",
+                        "type": "top",
+                        "strength": strength,
+                        "details": f"顶背离：价格↑({latest_price_peak:.2f} > {prev_price_peak:.2f}), DIF↓({latest_dif_peak:.4f} < {prev_dif_peak:.4f})",
+                    }
+                )
+                return result
+
+        # 🔻 底背离
+        if len(price_troughs) >= 2 and len(dif_troughs) >= 2:
+            latest_price_trough = price_troughs.iloc[-1]
+            prev_price_trough = price_troughs.iloc[-2]
+            latest_dif_trough = dif_troughs.iloc[-1]
+            prev_dif_trough = dif_troughs.iloc[-2]
+
+            if (
+                latest_price_trough < prev_price_trough
+                and latest_dif_trough > prev_dif_trough
+            ):
+                strength = "strong" if latest_dif_trough > 0 else "moderate"
+                result.update(
+                    {
+                        "divergence": "bullish_divergence",
+                        "type": "bottom",
+                        "strength": strength,
+                        "details": f"底背离：价格↓({latest_price_trough:.2f} < {prev_price_trough:.2f}), DIF↑({latest_dif_trough:.4f} > {prev_dif_trough:.4f})",
+                    }
+                )
+                return result
+
+        return result
 
     def get_cross_signal(self):
         """金叉与死叉 - 最简单的买卖信号"""
@@ -112,19 +218,13 @@ class MACDChecker:
         # 3️⃣ 获取柱状图动能
         latest_macd, momentum, momentum_change = self.get_momentum_signal()
 
-        print(
-            f"\n📊 动能详情：MACD={latest_macd:.4f}, "
-            f"当前动能={momentum}, "
-            f"动能变化={momentum_change}"
-        )
-
-        print("\n🎯 综合判断：")
-        print("—" * 30)
+        # 4️⃣ 背离信
+        divergence = self.detect_macd_divergence(window=12)
+        div_type = divergence.get("type")
+        div_strength = divergence.get("strength")
 
         # === 开始融合判断 ===
         score = 0  # 评分系统：越高越强
-        advice = ""
-        combined = "neutral"
 
         # ✅ 1. 金叉信号加分
         if cross_signal == "golden_cross":
@@ -158,6 +258,14 @@ class MACDChecker:
             score -= 2
             print("💀【动能转弱】柱状图由正转负，多翻空！警惕风险")
 
+        # ✅ 新增：背离修正
+        if div_type == "top":
+            score -= 3
+            print("⚠️【顶背离修正】信号强度大幅下调！")
+        elif div_type == "bottom":
+            score += 3
+            print("🔥【底背离确认】反转信号增强！强烈关注！")
+
         # === 综合评分决策 ===
         if score >= 4:
             combined = "strong_buy"
@@ -190,6 +298,9 @@ class MACDChecker:
             "score": score,
             "advice": advice,
             "combined_signal": combined,
+            "divergence_type": div_type,
+            "divergence_strength": div_strength,
+            "divergence_details": divergence.get("details", ""),
         }
 
 
@@ -201,4 +312,3 @@ if __name__ == "__main__":
     print("\n" + "📊 最终信号报告 ".center(50, "═"))
     for k, v in result.items():
         print(f"  {k:<18} : {v}")
-

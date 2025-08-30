@@ -45,7 +45,7 @@ ApexSignal 是一个用 Python 编写的轻量级工具集，旨在方便地获�
 运行项目根目录下的示例脚本 `get_stock_data.py` 来体验数据获取和指标计算功能：
 
 ```bash
-python get_stock_data.py
+python data_fetcher.py
 ```
 
 该脚本会：
