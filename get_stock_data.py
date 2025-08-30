@@ -5,7 +5,7 @@ from Ashare import get_price
 from MyTT import KDJ, MACD, RSI
 
 # 1. 获取光大银行sh601818的前复权行情数据
-count = 120 + 1  # 包含今天
+count = 200  # 包含今天
 frequency = "1d"  # 日线数据
 code = "sh601818"
 
