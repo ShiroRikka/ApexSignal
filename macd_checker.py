@@ -202,7 +202,7 @@ class MACDChecker:
 
         return latest_macd, momentum, momentum_change
 
-    def run(self):
+    def run(self, divergence_window=12, peak_window=3):
         """
         🚀 终极版：融合金叉、趋势、柱状图动能的多维 MACD 分析
         """
@@ -219,7 +219,9 @@ class MACDChecker:
         latest_macd, momentum, momentum_change = self.get_momentum_signal()
 
         # 4️⃣ 背离信
-        divergence = self.detect_macd_divergence(window=12)
+        divergence = self.detect_macd_divergence(
+            window=divergence_window, window_for_peaks=peak_window
+        )
         div_type = divergence.get("type")
         div_strength = divergence.get("strength")
 
