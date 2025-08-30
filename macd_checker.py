@@ -43,6 +43,10 @@ class MACDChecker:
     ):
         """
         检测 MACD 背离（作为类方法）
+        :param window: 分析窗口大小（默认12）
+        :param price_col: 价格列名
+        :param macd_col: MACD列名（默认"DIF"）
+        :param window_for_peaks: 极值点检测窗口（默认3）
         """
         df = self.df  # 使用 self.df
         recent = df.tail(window * 2).copy()
@@ -219,6 +223,8 @@ class MACDChecker:
     def run(self, divergence_window=12, peak_window=3):
         """
         🚀 终极版：融合金叉、趋势、柱状图动能的多维 MACD 分析
+        :param divergence_window: 背离检测窗口（默认12）
+        :param peak_window: 极值点检测窗口（默认3）
         """
         print(f"🔍 终极 MACD 多维分析：{self.stock_code}")
         print("—" * 50)

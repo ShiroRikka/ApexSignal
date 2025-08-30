@@ -15,7 +15,7 @@ def update_stock_data(code, count=200, frequency="1d", force_update=False):
     """
     更新单只股票的技术指标数据
     :param code: 股票代码，如 'sh601328'
-    :param count: 获取多少天数据
+    :param count: 获取多少天数据（默认200）
     :param frequency: 周期，'1d' 表示日线
     :param force_update: 是否强制更新（忽略今日已更新）
     :return: DataFrame 或 None（失败时）
