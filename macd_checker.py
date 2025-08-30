@@ -1,34 +1,21 @@
 import numpy as np
-
+import pandas as pd
 from tools import TOOLS
 
 
-def find_peaks_and_troughs(series, window=3):
+def find_peaks_and_troughs(series, window=2):
     """
-    找出序列中的局部高点（峰值）和低点（谷值）
-    返回：两个布尔数组，peak_mask 和 trough_mask
+    使用中心滚动窗口找局部峰值和谷值
     """
-    # 创建副本避免警告
-    s = series.copy()
-    s = s.ffill().bfill()  # 修复警告
-    values = s.values  # 转为 numpy 数组，按位置访问
-    peak_mask = np.zeros(len(values), dtype=bool)
-    trough_mask = np.zeros(len(values), dtype=bool)
+    s = series.copy().ffill().bfill()
+    w = 2 * window + 1  # 窗口大小
+    roll_max = s.rolling(window=w, center=True, min_periods=1).max()
+    roll_min = s.rolling(window=w, center=True, min_periods=1).min()
 
-    for i in range(window, len(values) - window):
-        # 检查是否是局部最大值
-        if all(values[i] >= values[i - j] for j in range(1, window + 1)) and all(
-            values[i] >= values[i + j] for j in range(1, window + 1)
-        ):
-            peak_mask[i] = True
+    peak_mask = (s == roll_max) & (s.notna())
+    trough_mask = (s == roll_min) & (s.notna())
 
-        # 检查是否是局部最小值
-        if all(values[i] <= values[i - j] for j in range(1, window + 1)) and all(
-            values[i] <= values[i + j] for j in range(1, window + 1)
-        ):
-            trough_mask[i] = True
-
-    return peak_mask, trough_mask
+    return peak_mask.values, trough_mask.values
 
 
 class MACDChecker:
@@ -61,6 +48,8 @@ class MACDChecker:
         recent = df.tail(window * 2).copy()
         if len(recent) < window:
             return {"divergence": "not_enough_data"}
+
+        print(recent)
 
         close = recent[price_col]
         dif = recent[macd_col].ffill().fillna(0)
@@ -202,6 +191,31 @@ class MACDChecker:
 
         return latest_macd, momentum, momentum_change
 
+    def plot(self, window=30):
+        recent = self.df.tail(window)
+        import matplotlib.pyplot as plt
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+        # 价格图
+        ax1.plot(recent['time'], recent['close'], label='Close')
+        peaks, troughs = find_peaks_and_troughs(recent['close'], window=2)
+        ax1.scatter(recent['time'][peaks], recent['close'][peaks], c='r', s=60, label='Peak')
+        ax1.scatter(recent['time'][troughs], recent['close'][troughs], c='g', s=60, label='Trough')
+        ax1.set_title(f"{self.stock_code} Price & MACD")
+        ax1.legend()
+
+        # DIF/DEA 图
+        ax2.plot(recent['time'], recent['DIF'], label='DIF', color='blue')
+        ax2.plot(recent['time'], recent['DEA'], label='DEA', color='orange')
+        ax2.bar(recent['time'], recent['MACD'], label='MACD', alpha=0.3)
+        ax2.axhline(0, color='gray', lw=0.8)
+        ax2.legend()
+
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
     def run(self, divergence_window=12, peak_window=3):
         """
         🚀 终极版：融合金叉、趋势、柱状图动能的多维 MACD 分析
@@ -305,16 +319,37 @@ class MACDChecker:
             "divergence_details": divergence.get("details", ""),
         }
 
-
 if __name__ == "__main__":
-    checker = MACDChecker("sh601288")
+    # 构造测试数据
+    test_data = pd.DataFrame({
+        "time": pd.date_range("2024-11-25", periods=12),
+        "close": [4.60, 4.50, 4.45, 4.55, 4.60, 4.50, 4.40, 4.35, 4.45, 4.55, 4.65, 4.75],
+        "DIF":   [0.020, 0.015, 0.010, 0.012, 0.018, 0.016, 0.014, 0.015, 0.020, 0.025, 0.030, 0.035],
+        "DEA":   [0.0] * 12,
+        "MACD":  [0.0] * 12,
+        "K":     [0.0] * 12,
+        "D":     [0.0] * 12,
+        "J":     [0.0] * 12,
+        "RSI":   [0.0] * 12,
+        "open":  [4.6]*12,
+        "high":  [4.7]*12,
+        "low":   [4.4]*12,
+        "volume":[100000]*12,
+    }).reset_index().rename(columns={'index': 'time'})
 
-    print("🧪 测试1：宽松背离检测（window=20, peak_window=4）")
-    result1 = checker.run(divergence_window=20, peak_window=4)
+    # 保存为 CSV，让 TOOLS 能读取
+    test_code = "TEST_BACKWARD"
+    test_data.to_csv(f"{test_code}_qfq_data_with_indicators.csv", index=False)
 
-    print("\n\n🧪 测试2：严格背离检测（window=8, peak_window=2）")
-    result2 = checker.run(divergence_window=8, peak_window=2)
+    # 使用真实 MACDChecker
+    checker = MACDChecker(stock_code=test_code)
+    result = checker.detect_macd_divergence(window=10, window_for_peaks=2)
 
-    print("\n\n🧪 测试3：默认参数")
-    result3 = checker.run()
+    print("\n" + "="*60)
+    print("🧪 底背离测试结果")
+    print("="*60)
+    print(f"检测到: {result['divergence']}")
+    print(f"类型: {result['type']}")
+    print(f"详情: {result['details']}")
+    checker.plot()
 

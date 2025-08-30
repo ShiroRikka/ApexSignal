@@ -11,3 +11,4 @@ for code in stock_list:
         checker = MACDChecker(code)
         result = checker.run()
         results.append(result)
+        checker.plot()
