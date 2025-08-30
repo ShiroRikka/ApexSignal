@@ -36,7 +36,7 @@ def find_peaks_and_troughs(series, window=2):
     return peak_mask.values, trough_mask.values
 
 
-class MACDChecker:
+class MacdChecker:
     """MACD信号检查类"""
 
     def __init__(self, stock_code="sh601818", config=None):

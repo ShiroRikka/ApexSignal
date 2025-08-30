@@ -33,7 +33,7 @@ indicators:
   rsi:
     period: 14
 
-# ==================== 信号检查相关 (MACD) ====================
+# ==================== 信号检查相关 ====================
 signal_checker:
   macd:
     # 背离检测窗口（天数）
@@ -41,6 +41,21 @@ signal_checker:
     # 极值点检测窗口
     peak_window: 3
     # 其他MACD检查器可能的参数...
+
+  rsi:
+    # 超买线
+    overbought: 70
+    # 超卖线
+    oversold: 30
+    # 弱买入区（接近超卖）
+    weak_buy_zone: 35
+    # 弱卖出区（接近超买）
+    weak_sell_zone: 65
+    # 背离分析窗口
+    divergence_window: 12
+    # 极值点检测窗口
+    peak_window: 3
+
 
 # ==================== 输出与可视化 ====================
 output:

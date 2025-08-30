@@ -6,3 +6,6 @@ __pycache__
 # Database files
 *.db
 *_qfq_data_with_indicators.csv
+/plots/
+/data_cache/
+/results/
