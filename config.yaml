@@ -1,0 +1,12 @@
+# ApexSignal 配置文件
+
+# 数据更新相关
+data_updater:
+  count: 365              # 默认获取365天的数据
+  frequency: "1d"         # 数据周期：日线
+  force_update: false     # 是否强制更新（忽略缓存）
+
+# MACD 检查相关
+macd_checker:
+  divergence_window: 12   # 背离检测窗口（天数）
+  peak_window: 3          # 极值点检测窗口

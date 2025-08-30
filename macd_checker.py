@@ -1,6 +1,17 @@
 import numpy as np
 import pandas as pd
+import yaml
+import os
 from tools import TOOLS
+
+
+def load_config():
+    """加载配置文件"""
+    config_path = "config.yaml"
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"配置文件 {config_path} 未找到，请创建 config.yaml")
+    with open(config_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 def find_peaks_and_troughs(series, window=2):
@@ -220,12 +231,17 @@ class MACDChecker:
         plt.tight_layout()
         plt.show()
 
-    def run(self, divergence_window=12, peak_window=3):
+    def run(self, divergence_window=None, peak_window=None):
         """
         🚀 终极版：融合金叉、趋势、柱状图动能的多维 MACD 分析
-        :param divergence_window: 背离检测窗口（默认12）
-        :param peak_window: 极值点检测窗口（默认3）
+        :param divergence_window: 背离检测窗口（默认从配置读取）
+        :param peak_window: 极值点检测窗口（默认从配置读取）
         """
+        config = load_config().get("macd_checker", {})
+        if divergence_window is None:
+            divergence_window = config.get("divergence_window", 12)
+        if peak_window is None:
+            peak_window = config.get("peak_window", 3)
         print(f"🔍 终极 MACD 多维分析：{self.stock_code}")
         print("—" * 50)
 

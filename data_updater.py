@@ -6,12 +6,38 @@ data_updater.py
 import os
 import time
 import datetime
+import yaml
 
 from Ashare import get_price
 from MyTT import KDJ, MACD, RSI
 
 
-def update_stock_data(code, count=200, frequency="1d", force_update=False):
+def load_config():
+    """加载配置文件"""
+    config_path = "config.yaml"
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"配置文件 {config_path} 未找到，请创建 config.yaml")
+    with open(config_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def update_stock_data(code, count=None, frequency=None, force_update=None):
+    """
+    更新单只股票的技术指标数据
+    :param code: 股票代码，如 'sh601328'
+    :param count: 获取多少天数据（默认从配置读取）
+    :param frequency: 周期，'1d' 表示日线（默认从配置读取）
+    :param force_update: 是否强制更新（默认从配置读取）
+    :return: DataFrame 或 None（失败时）
+    """
+    # 加载配置
+    config = load_config().get("data_updater", {})
+    if count is None:
+        count = config.get("count", 200)
+    if frequency is None:
+        frequency = config.get("frequency", "1d")
+    if force_update is None:
+        force_update = config.get("force_update", False)
     """
     更新单只股票的技术指标数据
     :param code: 股票代码，如 'sh601328'
